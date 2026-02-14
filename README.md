@@ -20,7 +20,7 @@ npm run dev
 
 Ouvrir **http://localhost:3000**
 
-Optionnel : copier `.env.local.example` en `.env.local` et définir `NEXT_PUBLIC_API_URL=http://localhost:3001` pour appeler le backend.
+Copier `.env.local.example` en `.env.local` et définir `NEXT_PUBLIC_API_URL=http://localhost:3001` pour le backend. Compte par défaut (après seed backend) : `admin@erp.bj` / `Admin123!`
 
 ## Backend (dossier séparé)
 
@@ -40,3 +40,5 @@ API : **http://localhost:3001** — `GET /health`, `GET /api/ping-db`
 
 - **[Cahier des charges](docs/)** — Cadrage général, spécifications fonctionnelles, roadmap.
 - **[Spec VIN 360°](docs/SPEC-VIN360.md)** — Gestion 360° centrée sur le VIN.
+- **[Rapport API backend attendu](docs/API-BACKEND-ATTENDU.md)** — Endpoints et formats attendus par le frontend.
+- **[Point Frontend](docs/POINT-FRONTEND.md)** — Alignement backend ↔ frontend, checklist, Phase 2/3.
