@@ -1,118 +1,122 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { apiPost } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { setAuth } from "@/lib/auth";
-import { authApi } from "@/lib/services/api";
-import { IconParc } from "@/components/icons/NavIcons";
+import { Card } from "@/components/ui/Card";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const { loginSuccess } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError(null);
     setLoading(true);
     try {
-      const data = await authApi.login({ email, password });
-      setAuth(data.accessToken, data.refreshToken, data.user);
-      router.push("/dashboard");
-      router.refresh();
+      const data = await apiPost<{
+        user: unknown;
+        accessToken: string;
+        refreshToken: string;
+        expiresIn: number;
+      }>("/auth/login", { email, password }, { skipAuth: true });
+      const d = data as {
+        user: { id: number; email: string; firstName?: string; lastName?: string; first_name?: string; last_name?: string; role: string; companyId?: number; company_id?: number };
+        accessToken: string;
+        refreshToken: string;
+        expiresIn: number;
+      };
+      loginSuccess({
+        user: {
+          id: d.user.id,
+          email: d.user.email,
+          firstName: d.user.firstName ?? d.user.first_name,
+          lastName: d.user.lastName ?? d.user.last_name,
+          role: d.user.role as import("@/types").UserRole,
+          companyId: d.user.companyId ?? d.user.company_id,
+        },
+        accessToken: d.accessToken,
+        refreshToken: d.refreshToken,
+        expiresIn: d.expiresIn,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Connexion refusée");
+      setError(
+        err instanceof Error ? err.message : "Erreur de connexion"
+      );
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex min-h-screen">
-      <div className="hidden w-1/2 flex-col justify-between bg-surface-dark p-12 lg:flex">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-500/20 text-accent-400">
-            <IconParc />
-          </div>
-          <div>
-            <span className="text-xl font-bold tracking-tight text-white">
-              ERP Auto
-            </span>
-            <span className="block text-sm text-slate-400">
-              Logistique & Transit
-            </span>
-          </div>
-        </div>
+    <div className="flex min-h-screen bg-mesh">
+      {/* Panneau gauche : branding */}
+      <div className="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 p-12 text-white lg:flex">
         <div>
-          <h2 className="text-3xl font-bold leading-tight text-white">
-            Gestion complète
-            <br />
-            <span className="text-accent-400">automobile & logistique</span>
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-lg font-bold">
+            P
+          </span>
+        </div>
+        <div className="space-y-6">
+          <h2 className="text-3xl font-bold tracking-tight">
+            ParcAuto Manager
           </h2>
-          <p className="mt-4 max-w-sm text-slate-400">
-            Parc véhicules, transit, douane, comptabilité et CRM — une seule plateforme pour piloter votre activité.
+          <p className="max-w-sm text-primary-200/90">
+            Solution professionnelle pour la gestion de votre parc automobile. Pilotage, transit et comptabilité en un seul endroit.
           </p>
         </div>
-        <p className="text-xs text-slate-500">
-          Afrique • Bénin • Conformité MECeF
+        <p className="text-xs text-primary-300/70">
+          © ParcAuto Manager — Tous droits réservés
         </p>
       </div>
-      <div className="flex w-full flex-col justify-center px-8 py-12 lg:w-1/2 lg:px-16">
-        <div className="mx-auto w-full max-w-md">
-          <div className="mb-10 lg:hidden">
-            <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-500 text-white">
-                <IconParc />
-              </div>
-              <span className="text-xl font-bold text-slate-800">ERP Auto</span>
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800">
+
+      {/* Panneau droit : formulaire */}
+      <div className="flex w-full items-center justify-center px-4 py-12 lg:w-1/2">
+        <Card className="w-full max-w-md border-0 shadow-soft-lg">
+          <h1 className="mb-2 text-xl font-bold tracking-tight text-slate-800">
             Connexion
           </h1>
-          <p className="mt-2 text-slate-500">
-            Utilisez vos identifiants pour accéder à la plateforme.
+          <p className="mb-6 text-sm text-slate-500">
+            Accédez à votre espace ParcAuto Manager
           </p>
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <Input
-              label="Email"
               type="email"
+              label="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="vous@entreprise.com"
               required
-              className="rounded-xl border-slate-200"
+              autoComplete="email"
             />
             <Input
-              label="Mot de passe"
               type="password"
+              label="Mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
               required
-              className="rounded-xl border-slate-200"
+              autoComplete="current-password"
             />
             {error && (
-              <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700" role="alert">
                 {error}
-              </div>
+              </p>
             )}
-            <Button
-              type="submit"
-              className="w-full py-3 text-base"
-              disabled={loading}
-            >
-              {loading ? "Connexion en cours…" : "Se connecter"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Connexion…" : "Se connecter"}
             </Button>
           </form>
-          <p className="mt-8 text-center text-xs text-slate-400">
-            Compte démo : admin@erp.bj / Admin123!
+          <p className="mt-6 text-center text-sm text-slate-500">
+            <Link href="#" className="font-medium text-primary-600 hover:text-primary-700 hover:underline">
+              Mot de passe oublié
+            </Link>
           </p>
-        </div>
+        </Card>
       </div>
     </div>
   );

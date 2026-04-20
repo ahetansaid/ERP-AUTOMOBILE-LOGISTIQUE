@@ -1,44 +1,31 @@
-# ERP Automobile & Logistique
+# ParcAuto Manager
 
-Plateforme SaaS de gestion complète : Transit • Import-Export • Concessionnaires • Afrique (Bénin).
+Solution SaaS — Parc Automobile d'occasion (frontend).
 
-**Ce dossier = frontend uniquement** (Next.js). Le backend est dans un dossier séparé.
+## Phase 0 — Fondations (branche `main`)
 
-## Stack technique
+- **Stack** : Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Auth** : page login, stockage JWT (localStorage), refresh token, déconnexion 30 min inactivité
+- **Layout** : Sidebar (navigation par module), Header (utilisateur, déconnexion)
+- **Client API** : `src/lib/api.ts` (baseURL via `NEXT_PUBLIC_API_URL`), intercepteur 401 → refresh puis retry ou redirection login
+- **Pages** : `/login`, `/` (redirige vers dashboard ou login), `/dashboard` (Parc Automobile avec placeholders), routes placeholder pour Supply Chain, Comptabilité, Transit, CRM, Utilisateurs, Paramètres
 
-| Couche | Technologies |
-|--------|--------------|
-| **Frontend** (ce dossier) | React.js + Next.js, Tailwind CSS, Recharts |
-| **Backend** (dossier à part) | Node.js + Express + MySQL (sans Prisma) |
-
-## Démarrage — Frontend (ce dossier)
+## Développement
 
 ```bash
+cp .env.local.example .env.local
+# Éditer .env.local : NEXT_PUBLIC_API_URL=http://localhost:3001
+
 npm install
 npm run dev
 ```
 
-Ouvrir **http://localhost:3000**
+Ouvrir [http://localhost:3000](http://localhost:3000). Sans backend, la connexion échouera ; les écrans protégés redirigent vers `/login`.
 
-Copier `.env.local.example` en `.env.local` et définir `NEXT_PUBLIC_API_URL=http://localhost:3001` pour le backend. Compte par défaut (après seed backend) : `admin@erp.bj` / `Admin123!`
+## Branche `dev`
 
-## Backend (dossier séparé)
+Les phases suivantes (tableau de bord avec stats réelles, Supply Chain, Comptabilité, etc.) sont à implémenter sur la branche **dev**.
 
-Le backend se trouve dans : **`ERP-AUTOMOBILE-LOGISTIQUE-BACKEND`** (même niveau que ce dossier).
+## Référence
 
-```bash
-cd ../ERP-AUTOMOBILE-LOGISTIQUE-BACKEND
-cp .env.example .env
-# Éditer .env (MySQL : user, mot de passe, base erp_automobile)
-npm install
-npm run dev
-```
-
-API : **http://localhost:3001** — `GET /health`, `GET /api/ping-db`
-
-## Documentation
-
-- **[Cahier des charges](docs/)** — Cadrage général, spécifications fonctionnelles, roadmap.
-- **[Spec VIN 360°](docs/SPEC-VIN360.md)** — Gestion 360° centrée sur le VIN.
-- **[Rapport API backend attendu](docs/API-BACKEND-ATTENDU.md)** — Endpoints et formats attendus par le frontend.
-- **[Point Frontend](docs/POINT-FRONTEND.md)** — Alignement backend ↔ frontend, checklist, Phase 2/3.
+- `docs/PLAN_IMPLEMENTATION_FRONTEND.md` — plan d'implémentation détaillé

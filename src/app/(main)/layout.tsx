@@ -1,16 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { isAuthenticated } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
-import { isAuthenticated } from "@/lib/auth";
-
-const LoadingPlaceholder = () => (
-  <div className="flex min-h-screen items-center justify-center">
-    <p className="text-slate-500">Chargement...</p>
-  </div>
-);
 
 export default function MainLayout({
   children,
@@ -18,31 +12,36 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  const [allowed, setAllowed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!isAuthenticated()) {
+      router.replace("/login");
+      setAllowed(false);
+    } else {
+      setAllowed(true);
+    }
+  }, [router, pathname]);
 
-  useEffect(() => {
-    if (!mounted) return;
-    if (!isAuthenticated()) router.replace("/login");
-  }, [mounted, router]);
-
-  if (!mounted) {
-    return <LoadingPlaceholder />;
+  if (allowed === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-mesh">
+        <p className="font-medium text-primary-700 dark:text-primary-400">Chargement…</p>
+      </div>
+    );
   }
 
-  if (!isAuthenticated()) {
-    return <LoadingPlaceholder />;
-  }
+  if (!allowed) return null;
 
   return (
-    <div className="min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <div className="pl-72">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="p-8 lg:p-10">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-mesh p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

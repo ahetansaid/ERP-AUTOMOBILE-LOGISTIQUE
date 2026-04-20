@@ -1,44 +1,74 @@
-"use client";
+/**
+ * Gestion authentification — stockage tokens + user, déconnexion 30 min inactivité
+ */
 
-const TOKEN_KEY = "accessToken";
-const REFRESH_KEY = "refreshToken";
-const USER_KEY = "user";
+import type { User } from "@/types";
+import { STORAGE_KEYS, AUTO_LOGOUT_AFTER_MS } from "./constants";
 
-export function setAuth(accessToken: string, refreshToken: string, user: unknown) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_KEY, refreshToken);
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
-export function clearAuth() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(REFRESH_KEY);
-  localStorage.removeItem(USER_KEY);
-}
-
-export function getAccessToken(): string | null {
+export function getStoredUser(): User | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function getRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(REFRESH_KEY);
-}
-
-export function getUser(): unknown {
-  if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(USER_KEY);
+  const raw = localStorage.getItem(STORAGE_KEYS.USER);
   if (!raw) return null;
   try {
-    return JSON.parse(raw);
+    return JSON.parse(raw) as User;
   } catch {
     return null;
   }
 }
 
+export function setStoredUser(user: User | null): void {
+  if (typeof window === "undefined") return;
+  if (user) localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  else localStorage.removeItem(STORAGE_KEYS.USER);
+}
+
+export function setStoredTokens(
+  accessToken: string,
+  refreshToken: string,
+  expiresIn: number
+): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+  localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+  const expiresAt = Date.now() + expiresIn * 1000;
+  localStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRES_AT, String(expiresAt));
+}
+
+export function clearAuth(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.USER);
+  localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
+}
+
 export function isAuthenticated(): boolean {
-  return !!getAccessToken();
+  if (typeof window === "undefined") return false;
+  const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  const expiresAt = localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
+  if (!token) return false;
+  if (expiresAt && Date.now() >= Number(expiresAt)) return false;
+  return true;
+}
+
+let inactivityTimer: ReturnType<typeof setTimeout> | null = null;
+
+function resetInactivityTimer(callback: () => void): void {
+  if (inactivityTimer) clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(callback, AUTO_LOGOUT_AFTER_MS);
+}
+
+export function startInactivityTimer(onLogout: () => void): () => void {
+  const handleActivity = () => resetInactivityTimer(onLogout);
+  resetInactivityTimer(onLogout);
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("mousemove", handleActivity);
+  window.addEventListener("keydown", handleActivity);
+  window.addEventListener("focus", handleActivity);
+  return () => {
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    window.removeEventListener("mousemove", handleActivity);
+    window.removeEventListener("keydown", handleActivity);
+    window.removeEventListener("focus", handleActivity);
+  };
 }

@@ -1,94 +1,144 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, CardTitle } from "@/components/ui/Card";
-import { vehiclesApi } from "@/lib/services/api";
-import type { Vehicle } from "@/types";
+import { apiGet, apiPatch } from "@/lib/api";
+import type { VehicleListItem } from "@/types/vehicle";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+
+function pickVehicle(r: Record<string, unknown>): VehicleListItem & { devis_cloture?: boolean } {
+  return {
+    id: (r.id as number) ?? 0,
+    vin: (r.vin as string) ?? "",
+    brand: (r.brand as string) ?? (r.marque as string),
+    model: (r.model as string) ?? (r.modele as string),
+    year: (r.year as number) ?? (r.annee as number),
+    color: (r.color as string) ?? (r.couleur as string),
+    status: (r.status as string) ?? "",
+    devis_cloture: (r.devis_cloture as boolean) ?? (r.devisCloture as boolean),
+  };
+}
 
 export default function AtelierPage() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [list, setList] = useState<(VehicleListItem & { devis_cloture?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [closingId, setClosingId] = useState<number | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    // TODO: remplacer par GET /vehicles?maintenance=1 ou GET /atelier/vehicles quand le backend exposera les véhicules en maintenance
-    vehiclesApi
-      .list({ limit: 100 })
-      .then((res) => {
-        if (!cancelled) {
-          const inMaintenance = (res.data ?? []).filter((v) => (v as Vehicle & { inMaintenance?: boolean }).inMaintenance === true);
-          setVehicles(inMaintenance.length > 0 ? inMaintenance : []);
-        }
-      })
-      .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Erreur chargement");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
+  const fetchList = useCallback(async () => {
+    try {
+      setError(null);
+      const res = await apiGet<{ data?: unknown[] }>("/vehicles?status=EN_MAINTENANCE");
+      const raw = Array.isArray(res) ? res : (res as { data?: unknown[] })?.data ?? [];
+      setList((raw as Record<string, unknown>[]).map(pickVehicle));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur chargement");
+      setList([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center gap-4">
-        <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-accent-600">← Parc Automobile</Link>
-        <div className="h-4 w-px bg-slate-200" />
-        <h1 className="text-2xl font-bold tracking-tight text-slate-800">Atelier</h1>
-      </div>
-      <p className="text-slate-600">
-        Véhicules en maintenance. Affichage du prestataire si la maintenance est gérée en externe, des devis émis (prestation et prestataire). Vous pouvez marquer un véhicule comme « sorti de maintenance » pour le faire repasser en stock disponible.
-      </p>
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
 
-      <Card>
-        <CardTitle>Véhicules en maintenance</CardTitle>
-        {loading && (
-          <div className="flex items-center justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-200 border-t-accent-600" />
+  const handleCloturerMaintenance = async (id: number) => {
+    try {
+      setClosingId(id);
+      await apiPatch(`/vehicles/${id}`, { status: "DISPONIBLE" });
+      await fetchList();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur clôture");
+    } finally {
+      setClosingId(null);
+    }
+  };
+
+  const filtered = list.filter(
+    (v) =>
+      !search ||
+      (v.vin ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (v.brand ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (v.model ?? "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Atelier / Maintenance</h1>
+        <p className="mt-1 text-slate-600">
+          Véhicules en maintenance. Clôture possible après émission du reçu du devis.
+        </p>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
+      <Input
+        placeholder="Rechercher par VIN, marque, modèle..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="max-w-md"
+      />
+
+      <Card title="Véhicules en maintenance">
+        {loading ? (
+          <p className="py-8 text-center text-slate-500">Chargement…</p>
+        ) : filtered.length === 0 ? (
+          <p className="py-8 text-center text-slate-500">Aucun véhicule en maintenance.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-200 text-sm text-slate-600">
+                  <th className="p-3 font-medium">VIN</th>
+                  <th className="p-3 font-medium">Marque / Modèle</th>
+                  <th className="p-3 font-medium">Année</th>
+                  <th className="p-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((v) => (
+                  <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                    <td className="p-3 font-mono">{v.vin}</td>
+                    <td className="p-3">
+                      {v.brand ?? "—"} {v.model ? ` / ${v.model}` : ""}
+                    </td>
+                    <td className="p-3">{v.year ?? "—"}</td>
+                    <td className="p-3">
+                      <Link
+                        href={`/vehicules/${v.id}`}
+                        className="mr-2 text-sm text-primary-600 hover:underline"
+                      >
+                        Voir fiche
+                      </Link>
+                      <Link
+                        href={`/comptabilite/devis?vehicleId=${v.id}`}
+                        className="mr-2 text-sm text-primary-600 hover:underline"
+                      >
+                        Devis
+                      </Link>
+                      <Button
+                        size="sm"
+                        disabled={closingId === v.id}
+                        title="Clôturer la maintenance (véhicule retourne en stock disponible). Le backend refuse si aucun reçu devis émis."
+                        onClick={() => handleCloturerMaintenance(v.id)}
+                      >
+                        {closingId === v.id ? "Clôture…" : "Clôturer la maintenance"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-        {error && <p className="py-6 text-red-600">{error}</p>}
-        {!loading && !error && (
-          <>
-            {vehicles.length === 0 ? (
-              <p className="py-12 text-center text-slate-500">
-                Aucun véhicule en maintenance pour l&apos;instant. Le backend pourra exposer une liste dédiée (champ maintenance / prestataire / devis).
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-left text-slate-600">
-                      <th className="py-3 pr-4">VIN</th>
-                      <th className="py-3 pr-4">Marque / Modèle</th>
-                      <th className="py-3 pr-4">Prestataire</th>
-                      <th className="py-3 pr-4">Devis</th>
-                      <th className="py-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vehicles.map((v) => (
-                      <tr key={v.id} className="border-b border-slate-100">
-                        <td className="py-3 font-mono text-slate-800">{v.vin}</td>
-                        <td className="py-3">{v.brand} {v.model}</td>
-                        <td className="py-3 text-slate-600">—</td>
-                        <td className="py-3 text-slate-600">—</td>
-                        <td className="py-3 text-right">
-                          <Link href={`/parc-auto/${v.vin}`} className="font-medium text-accent-600 hover:underline">Fiche</Link>
-                          <span className="mx-2 text-slate-300">|</span>
-                          <button type="button" className="font-medium text-slate-600 hover:text-accent-600">
-                            Quitter la maintenance
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
         )}
       </Card>
     </div>

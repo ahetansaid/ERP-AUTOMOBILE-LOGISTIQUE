@@ -1,182 +1,271 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Card, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { clientsApi } from "@/lib/services/api";
-import type { ClientWithVehicles } from "@/types";
+import { apiGet } from "@/lib/api";
+import { Card } from "@/components/ui/Card";
 
-export default function ClientFichePage() {
+interface ClientDetail {
+  id: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  notes?: string;
+  status?: string;
+  type?: string;
+  nif?: string;
+  rccm?: string;
+}
+
+interface PurchaseHistoryItem {
+  id: number;
+  vin?: string;
+  brand?: string;
+  model?: string;
+  status?: string;
+  price_sale?: number;
+}
+
+interface PaymentHistoryItem {
+  id: number;
+  payment_date?: string;
+  amount?: number;
+  reference?: string;
+  invoice_number?: string;
+  source_type?: string;
+}
+
+interface TransitHistoryItem {
+  id: number;
+  vin?: string;
+  brand?: string;
+  model?: string;
+  step_name?: string;
+  date_arrival?: string;
+  date_departure?: string;
+}
+
+/** Normalise l'objet client renvoyé par l'API (snake_case / camelCase / aliases). */
+function normalizeClient(raw: Record<string, unknown> | null): ClientDetail | null {
+  if (!raw) return null;
+  const name =
+    (raw.name as string) ?? (raw.nom as string) ??
+    ([raw.first_name, raw.last_name].filter(Boolean).join(" ").trim() || (raw.raison_sociale as string));
+  return {
+    id: (raw.id as number) ?? 0,
+    name: name || undefined,
+    email: (raw.email as string) ?? undefined,
+    phone: (raw.phone as string) ?? (raw.telephone as string) ?? undefined,
+    address: (raw.address as string) ?? (raw.adresse as string) ?? undefined,
+    city: (raw.city as string) ?? (raw.ville as string) ?? undefined,
+    country: (raw.country as string) ?? (raw.pays as string) ?? undefined,
+    notes: (raw.notes as string) ?? undefined,
+    status: (raw.status as string) ?? undefined,
+    type: (raw.type as string) ?? (raw.client_type as string) ?? undefined,
+    nif: (raw.nif as string) ?? undefined,
+    rccm: (raw.rccm as string) ?? undefined,
+  };
+}
+
+export default function ClientDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const id = params.id as string;
-  const [client, setClient] = useState<ClientWithVehicles | null>(null);
+  const id = params?.id ? String(params.id) : null;
+  const [client, setClient] = useState<ClientDetail | null>(null);
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryItem[]>([]);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([]);
+  const [transitHistory, setTransitHistory] = useState<TransitHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchDetail = useCallback(async () => {
     if (!id) return;
-    let cancelled = false;
-    clientsApi
-      .getById(id)
-      .then((c) => {
-        if (!cancelled) setClient(c);
-      })
-      .catch((e) => {
-        if (!cancelled)
-          setError(e instanceof Error ? e.message : "Client non trouvé");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    try {
+      setError(null);
+      const res = await apiGet<{
+        client?: Record<string, unknown>;
+        purchaseHistory?: unknown[];
+        paymentHistory?: unknown[];
+        transitHistory?: unknown[];
+      }>(`/clients/${id}`);
+      const raw = (res as { client?: Record<string, unknown> }).client ?? (res as Record<string, unknown>);
+      setClient(normalizeClient(raw && typeof raw === "object" ? raw : null));
+
+      const ph = (res as { purchaseHistory?: unknown[] }).purchaseHistory ?? [];
+      setPurchaseHistory((ph as Record<string, unknown>[]).map((r) => ({
+        id: (r.id as number) ?? 0,
+        vin: (r.vin as string) ?? undefined,
+        brand: (r.brand as string) ?? undefined,
+        model: (r.model as string) ?? undefined,
+        status: (r.status as string) ?? undefined,
+        price_sale: (r.price_sale as number) ?? (r.priceSale as number) ?? undefined,
+      })));
+
+      const pay = (res as { paymentHistory?: unknown[] }).paymentHistory ?? [];
+      setPaymentHistory((pay as Record<string, unknown>[]).map((r) => ({
+        id: (r.id as number) ?? 0,
+        payment_date: (r.payment_date as string) ?? (r.paymentDate as string) ?? undefined,
+        amount: (r.amount as number) ?? (r.montant as number) ?? undefined,
+        reference: (r.reference as string) ?? undefined,
+        invoice_number: (r.invoice_number as string) ?? (r.invoiceNumber as string) ?? undefined,
+        source_type: (r.source_type as string) ?? (r.sourceType as string) ?? undefined,
+      })));
+
+      const tr = (res as { transitHistory?: unknown[] }).transitHistory ?? [];
+      setTransitHistory((tr as Record<string, unknown>[]).map((r) => ({
+        id: (r.id as number) ?? 0,
+        vin: (r.vin as string) ?? undefined,
+        brand: (r.brand as string) ?? undefined,
+        model: (r.model as string) ?? undefined,
+        step_name: (r.step_name as string) ?? (r.stepName as string) ?? undefined,
+        date_arrival: (r.date_arrival as string) ?? (r.dateArrival as string) ?? undefined,
+        date_departure: (r.date_departure as string) ?? (r.dateDeparture as string) ?? undefined,
+      })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur chargement");
+      setClient(null);
+      setPurchaseHistory([]);
+      setPaymentHistory([]);
+      setTransitHistory([]);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent-200 border-t-accent-600" />
-      </div>
-    );
-  }
-  if (error || !client) {
-    return (
-      <Card className="text-center">
-        <p className="text-slate-600">{error ?? "Client non trouvé."}</p>
-        <Button className="mt-4" onClick={() => router.push("/crm")}>Retour CRM</Button>
-      </Card>
-    );
-  }
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
 
-  const vehicles = client?.vehicles ?? [];
-  const invoices = client?.invoices ?? [];
-  const payments = client?.payments ?? [];
-  const transitOps = client?.transitOperations ?? [];
+  if (!id) return <p className="text-slate-500">Identifiant manquant.</p>;
+  if (loading && !client) return <p className="py-8 text-slate-500">Chargement…</p>;
+  if (error && !client) return <div><p className="text-red-600 dark:text-red-400">{error}</p><Link href="/crm" className="text-primary-600 hover:underline dark:text-primary-400">Retour</Link></div>;
 
+  const c = client!;
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center gap-4">
-        <Link href="/crm" className="text-sm font-medium text-slate-500 hover:text-accent-600">← CRM Clients</Link>
-        <div className="h-4 w-px bg-slate-200" />
-        <h1 className="text-2xl font-bold tracking-tight text-slate-800">{client.name}</h1>
+    <div className="space-y-6">
+      <div>
+        <Link href="/crm" className="text-sm text-primary-600 hover:underline dark:text-primary-400">← Liste clients</Link>
+        <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Fiche client — {c.name ?? id}</h1>
       </div>
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Card>
-          <CardTitle>Coordonnées</CardTitle>
-          <dl className="mt-4 space-y-2 text-sm">
-            <div><dt className="text-slate-500">Email</dt><dd>{client.email ?? "—"}</dd></div>
-            <div><dt className="text-slate-500">Téléphone</dt><dd>{client.phone ?? "—"}</dd></div>
-            <div><dt className="text-slate-500">Adresse</dt><dd>{client.address ?? "—"}</dd></div>
-          </dl>
-        </Card>
-        <Card>
-          <CardTitle>Véhicules liés</CardTitle>
-          <ul className="mt-4 space-y-2 text-sm">
-            {vehicles.length === 0 ? (
-              <li className="text-slate-500">Aucun véhicule associé</li>
-            ) : (
-              vehicles.map((v) => (
-                <li key={v.id}>
-                  <Link href={`/parc-auto/${v.vin}`} className="font-medium text-accent-600 hover:text-accent-700 hover:underline">{v.vin} — {v.brand} {v.model}</Link>
-                </li>
-              ))
-            )}
-          </ul>
-        </Card>
-      </div>
-
-      <Card>
-        <CardTitle>Factures</CardTitle>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-slate-100">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-slate-600">
-                <th className="px-4 py-3 font-medium">ID</th>
-                <th className="px-4 py-3 font-medium">Montant</th>
-                <th className="px-4 py-3 font-medium">Statut</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">Aucune facture</td></tr>
-              ) : (
-                invoices.map((inv) => (
-                  <tr key={inv.id} className="border-b border-slate-100">
-                    <td className="font-mono px-4 py-3">{inv.id.slice(0, 8)}…</td>
-                    <td className="px-4 py-3">{inv.amount?.toLocaleString() ?? "—"}</td>
-                    <td className="px-4 py-3">{inv.status ?? "—"}</td>
-                    <td className="px-4 py-3">{inv.createdAt ? new Date(inv.createdAt).toLocaleDateString("fr-FR") : "—"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <Card title="Coordonnées">
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <div><dt className="text-sm text-slate-500 dark:text-slate-400">Nom</dt><dd className="font-medium text-slate-900 dark:text-slate-100">{c.name ?? "—"}</dd></div>
+          <div><dt className="text-sm text-slate-500 dark:text-slate-400">Email</dt><dd className="text-slate-800 dark:text-slate-200">{c.email ?? "—"}</dd></div>
+          <div><dt className="text-sm text-slate-500 dark:text-slate-400">Téléphone</dt><dd className="text-slate-800 dark:text-slate-200">{c.phone ?? "—"}</dd></div>
+          <div><dt className="text-sm text-slate-500 dark:text-slate-400">Adresse</dt><dd className="text-slate-800 dark:text-slate-200">{c.address ?? "—"}</dd></div>
+          <div><dt className="text-sm text-slate-500 dark:text-slate-400">Ville / Pays</dt><dd className="text-slate-800 dark:text-slate-200">{c.city ?? "—"}{c.country ? ` / ${c.country}` : ""}</dd></div>
+          <div><dt className="text-sm text-slate-500 dark:text-slate-400">Statut</dt><dd className="text-slate-800 dark:text-slate-200">{c.status ?? "—"}</dd></div>
+          {(c.type || c.nif || c.rccm) && (
+            <>
+              {c.type && <div><dt className="text-sm text-slate-500 dark:text-slate-400">Type</dt><dd className="text-slate-800 dark:text-slate-200">{c.type}</dd></div>}
+              {c.nif && <div><dt className="text-sm text-slate-500 dark:text-slate-400">NIF</dt><dd className="text-slate-800 dark:text-slate-200">{c.nif}</dd></div>}
+              {c.rccm && <div><dt className="text-sm text-slate-500 dark:text-slate-400">RCCM</dt><dd className="text-slate-800 dark:text-slate-200">{c.rccm}</dd></div>}
+            </>
+          )}
+        </dl>
+        {c.notes && <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{c.notes}</p>}
       </Card>
 
-      <Card>
-        <CardTitle>Paiements</CardTitle>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-slate-100">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-slate-600">
-                <th className="px-4 py-3 font-medium">Montant</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.length === 0 ? (
-                <tr><td colSpan={3} className="px-4 py-6 text-center text-slate-500">Aucun paiement</td></tr>
-              ) : (
-                payments.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-100">
-                    <td className="px-4 py-3 font-medium">{p.amount?.toLocaleString() ?? "—"}</td>
-                    <td className="px-4 py-3">{p.paymentType ?? "—"}</td>
-                    <td className="px-4 py-3">{p.paidAt ? new Date(p.paidAt).toLocaleDateString("fr-FR") : "—"}</td>
+      <Card title="Véhicules achetés / en cours">
+        {purchaseHistory.length === 0 ? (
+          <p className="text-slate-500 dark:text-slate-400">Aucun véhicule.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-600 dark:border-slate-600 dark:text-slate-400">
+                  <th className="p-2 font-medium">VIN</th>
+                  <th className="p-2 font-medium">Véhicule</th>
+                  <th className="p-2 font-medium">Statut</th>
+                  <th className="p-2 font-medium">Prix</th>
+                </tr>
+              </thead>
+              <tbody>
+                {purchaseHistory.map((v) => (
+                  <tr key={v.id} className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="p-2 font-mono text-slate-800 dark:text-slate-200">{v.vin ?? "—"}</td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{v.brand ?? "—"} {v.model ?? ""}</td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{v.status ?? "—"}</td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{v.price_sale != null ? v.price_sale.toLocaleString("fr-FR") + " FCFA" : "—"}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
 
-      <Card>
-        <CardTitle>Opérations transit</CardTitle>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-slate-100">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-slate-600">
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Référence</th>
-                <th className="px-4 py-3 font-medium">N° BL</th>
-                <th className="px-4 py-3 font-medium">Arrivée port</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transitOps.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-500">Aucune opération transit</td></tr>
-              ) : (
-                transitOps.map((op) => (
-                  <tr key={op.id} className="border-b border-slate-100">
-                    <td className="px-4 py-3">{op.operationType ?? "—"}</td>
-                    <td className="px-4 py-3">{op.reference ?? "—"}</td>
-                    <td className="px-4 py-3 font-mono">{op.blNumber ?? "—"}</td>
-                    <td className="px-4 py-3">{op.dateArriveePort ? new Date(op.dateArriveePort).toLocaleDateString("fr-FR") : "—"}</td>
-                    <td className="px-4 py-3">{op.createdAt ? new Date(op.createdAt).toLocaleDateString("fr-FR") : "—"}</td>
+      <Card title="Historique des paiements">
+        {paymentHistory.length === 0 ? (
+          <p className="text-slate-500 dark:text-slate-400">Aucun paiement enregistré.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-600 dark:border-slate-600 dark:text-slate-400">
+                  <th className="p-2 font-medium">Date</th>
+                  <th className="p-2 font-medium">Référence</th>
+                  <th className="p-2 font-medium">Source</th>
+                  <th className="p-2 font-medium text-right">Montant</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentHistory.map((p) => (
+                  <tr key={p.id} className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="p-2 text-slate-800 dark:text-slate-200">
+                      {p.payment_date ? new Date(p.payment_date).toLocaleDateString("fr-FR") : "—"}
+                    </td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{p.reference ?? "—"}</td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{p.source_type ?? p.invoice_number ?? "—"}</td>
+                    <td className="p-2 text-right font-medium text-green-700 dark:text-green-400">
+                      {p.amount != null ? p.amount.toLocaleString("fr-FR") + " FCFA" : "—"}
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          Reçus liés aux factures ou devis. <Link href="/comptabilite/recus" className="text-primary-600 hover:underline dark:text-primary-400">Voir les reçus</Link>
+        </p>
+      </Card>
+
+      <Card title="Transit">
+        {transitHistory.length === 0 ? (
+          <p className="text-slate-500 dark:text-slate-400">Aucun véhicule en transit pour ce client.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-600 dark:border-slate-600 dark:text-slate-400">
+                  <th className="p-2 font-medium">VIN</th>
+                  <th className="p-2 font-medium">Véhicule</th>
+                  <th className="p-2 font-medium">Étape</th>
+                  <th className="p-2 font-medium">Arrivée</th>
+                  <th className="p-2 font-medium">Départ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transitHistory.map((t) => (
+                  <tr key={t.id} className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="p-2 font-mono text-slate-800 dark:text-slate-200">{t.vin ?? "—"}</td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{t.brand ?? "—"} {t.model ?? ""}</td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{t.step_name ?? "—"}</td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{t.date_arrival ? new Date(t.date_arrival).toLocaleDateString("fr-FR") : "—"}</td>
+                    <td className="p-2 text-slate-800 dark:text-slate-200">{t.date_departure ? new Date(t.date_departure).toLocaleDateString("fr-FR") : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <Link href="/transit" className="text-primary-600 hover:underline dark:text-primary-400">Voir le transit</Link>
+        </p>
       </Card>
     </div>
   );
