@@ -5,6 +5,7 @@ import { apiGet, apiPut } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { TwoFactorPanel } from "@/components/settings/TwoFactorPanel";
 
 export default function ParametresPage() {
   const [tauxUsd, setTauxUsd] = useState(600);
@@ -63,6 +64,9 @@ export default function ParametresPage() {
           {saving ? "Enregistrement…" : "Enregistrer"}
         </Button>
       </Card>
+
+      <TwoFactorPanel />
+
       <Card title="Numérotation documents">
         <p className="text-sm text-slate-600">
           Factures, reçus, devis, pro forma : format et compteur gérés côté backend.
