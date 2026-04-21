@@ -2,6 +2,9 @@
   "permissions": {
     "allow": [
       "Read(//c/xampp/htdocs/ERP-AUTOMOBILE-LOGISTIQUE-BACKEND/**)"
+    ],
+    "additionalDirectories": [
+      "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\prisma"
     ]
   }
 }
