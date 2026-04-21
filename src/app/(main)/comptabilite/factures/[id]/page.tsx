@@ -211,14 +211,31 @@ export default function FactureFichePage() {
         </div>
         <div className="flex gap-2">
           <Button
+            variant="primary"
+            onClick={() => {
+              const base =
+                process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+              const token =
+                typeof window !== "undefined"
+                  ? localStorage.getItem("parcauto_access_token")
+                  : null;
+              // Ouvre le PDF inline dans un nouvel onglet.
+              // Le token est passé en query string car <a target=_blank> ne peut pas porter d'en-têtes.
+              const url = `${base}/invoices/${inv.id}/pdf${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+              window.open(url, "_blank", "noopener,noreferrer");
+            }}
+          >
+            Télécharger PDF moderne
+          </Button>
+          <Button
             variant="secondary"
             onClick={() => openFactureDefinitivePrint(inv, receipts)}
           >
-            Télécharger / Imprimer la facture
+            Imprimer (classique)
           </Button>
           <Link
             href={`/comptabilite/recus?invoiceId=${inv.id}`}
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 px-4 py-2 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-200 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
           >
             Émettre un reçu
           </Link>
