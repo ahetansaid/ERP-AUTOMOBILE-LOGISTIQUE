@@ -4,7 +4,12 @@
       "Read(//c/xampp/htdocs/ERP-AUTOMOBILE-LOGISTIQUE-BACKEND/**)"
     ],
     "additionalDirectories": [
-      "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\prisma"
+      "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\prisma",
+      "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\src\\routes",
+      "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\src\\emails\\templates",
+      "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\src\\services",
+      "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\src\\lib",
+      "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\src\\middleware"
     ]
   }
 }

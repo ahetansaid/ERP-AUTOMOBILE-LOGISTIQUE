@@ -5,6 +5,7 @@ import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import type { DashboardStats } from "@/types/dashboard";
 import { Card } from "@/components/ui/Card";
+import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 
 function formatFcfa(value: number | undefined): string {
   if (value == null) return "—";
@@ -111,6 +112,8 @@ export default function DashboardPage() {
           {error}
         </div>
       )}
+
+      <AlertsPanel />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map(({ key, label, href, linkLabel, accent, icon }) => (

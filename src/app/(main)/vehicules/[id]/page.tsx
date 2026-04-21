@@ -7,6 +7,7 @@ import { apiGet, apiPatch } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { VehiclePhotos } from "@/components/uploads/VehiclePhotos";
 
 interface VehicleDetail {
   id: number;
@@ -183,6 +184,8 @@ export default function VehiculeDetailPage() {
           <div><dt className="text-sm text-slate-500">Client</dt><dd>{v.client_name ?? "—"}</dd></div>
         </dl>
       </Card>
+
+      {id ? <VehiclePhotos vehicleId={id} /> : null}
 
       <Card title="Navigation">
         <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
