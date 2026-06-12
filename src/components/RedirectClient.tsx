@@ -14,8 +14,9 @@ export function RedirectClient() {
 
   useEffect(() => {
     if (!mounted) return;
+    // Connecté → app ; visiteur → page d'accueil marketing (et non /login).
     if (isAuthenticated()) router.replace("/dashboard");
-    else router.replace("/login");
+    else router.replace("/decouvrir");
   }, [mounted, router]);
 
   return (
