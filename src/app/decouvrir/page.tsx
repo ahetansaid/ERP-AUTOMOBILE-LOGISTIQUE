@@ -1,11 +1,21 @@
 import Link from "next/link";
+import { Reveal } from "@/components/marketing/Reveal";
 
 /**
  * Landing marketing — ParcAuto Manager
  * Style inspiré Framer : hero fullscreen avec gradient mesh, sections alternées,
  * trust bar, features en grille, pricing, CTA final.
- * Server Component (pas de client-side hooks nécessaires).
+ * Photos illustratives : Pexels.
  */
+
+const IMG = {
+  // Parc auto vu du ciel
+  lot: "https://images.pexels.com/photos/395537/pexels-photo-395537.jpeg?auto=compress&cs=tinysrgb&w=1400",
+  // Alignement de véhicules en concession
+  showroom: "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1400",
+  // Port à conteneurs (transit maritime)
+  port: "https://images.pexels.com/photos/20581299/pexels-photo-20581299.jpeg?auto=compress&cs=tinysrgb&w=1400",
+};
 
 export const metadata = {
   title: "ParcAuto Manager — ERP import auto en Afrique de l'Ouest",
@@ -196,47 +206,42 @@ export default function DecouvrirPage() {
           </p>
         </div>
 
-        {/* Mockup placeholder */}
-        <div className="mt-16 md:mt-20">
-          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-soft-lg">
-            <div className="flex items-center gap-1.5 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
-              <span className="h-3 w-3 rounded-full bg-neutral-300" />
-              <span className="h-3 w-3 rounded-full bg-neutral-300" />
-              <span className="h-3 w-3 rounded-full bg-neutral-300" />
-              <span className="ml-4 font-mono text-xs text-neutral-400">
-                parcauto.app/dashboard
-              </span>
-            </div>
-            <div className="grid grid-cols-12 gap-0">
-              <aside className="col-span-3 border-r border-neutral-100 bg-neutral-50 p-4">
-                <div className="mb-4 h-6 w-24 rounded bg-neutral-200" />
-                <div className="space-y-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-7 rounded-lg ${i === 1 ? "bg-brand-100" : "bg-neutral-100"}`}
-                    />
-                  ))}
-                </div>
-              </aside>
-              <div className="col-span-9 p-6">
-                <div className="mb-4 h-4 w-32 rounded bg-neutral-200" />
-                <div className="mb-6 grid grid-cols-3 gap-4">
-                  {["CA 15,2M", "Stock 48", "Transit 7"].map((k) => (
-                    <div
-                      key={k}
-                      className="rounded-xl border border-neutral-200 bg-white p-4"
-                    >
-                      <div className="text-xs text-neutral-500">{k.split(" ")[0]}</div>
-                      <div className="mt-1 font-display text-2xl font-semibold">
-                        {k.split(" ")[1]}
-                      </div>
+        {/* Showcase photo + KPI flottants */}
+        <div className="relative mt-16 md:mt-20">
+          <div className="relative mx-auto max-w-5xl">
+            <div className="relative overflow-hidden rounded-3xl border border-white/40 shadow-soft-lg ring-1 ring-black/5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={IMG.lot}
+                alt="Parc automobile géré avec ParcAuto Manager"
+                className="h-[300px] w-full animate-ken-burns object-cover md:h-[460px]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-950/70 via-brand-900/10 to-transparent" />
+
+              {/* Cartes KPI en verre */}
+              <div className="absolute bottom-5 left-5 right-5 flex flex-wrap gap-3">
+                {[
+                  { k: "Chiffre d'affaires", v: "15,2 M", u: "FCFA" },
+                  { k: "Véhicules en stock", v: "48", u: "unités" },
+                  { k: "En transit", v: "7", u: "Port de Cotonou" },
+                ].map((m, i) => (
+                  <div
+                    key={m.k}
+                    className="animate-float-y rounded-2xl border border-white/30 bg-white/15 px-4 py-3 backdrop-blur-md [animation-delay:var(--d)]"
+                    style={{ ["--d" as string]: `${i * 1.3}s` }}
+                  >
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-white/70">
+                      {m.k}
                     </div>
-                  ))}
-                </div>
-                <div className="h-40 rounded-xl bg-gradient-to-br from-brand-50 via-violet-50 to-neutral-50" />
+                    <div className="mt-0.5 font-display text-2xl font-semibold text-white">
+                      {m.v} <span className="text-sm font-normal text-white/70">{m.u}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+            {/* Halo */}
+            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-tr from-brand-400/30 to-violet-400/20 blur-3xl" />
           </div>
         </div>
       </section>
@@ -261,7 +266,7 @@ export default function DecouvrirPage() {
 
       {/* FEATURES */}
       <section id="features" className="relative mx-auto max-w-6xl px-6 py-24 md:py-32">
-        <div className="mx-auto max-w-2xl text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-600">
             Fonctionnalités
           </p>
@@ -273,23 +278,72 @@ export default function DecouvrirPage() {
             Fini Excel, les WhatsApp éparpillés et les oublis d'échéance. Tout
             passe par une seule interface, cohérente et rapide.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f) => (
-            <div
-              key={f.title}
-              className="group relative rounded-2xl border border-neutral-200 bg-white p-6 transition-all hover:border-brand-300 hover:shadow-soft-lg"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100">
-                <f.icon className="h-5 w-5" />
+          {FEATURES.map((f, i) => (
+            <Reveal key={f.title} delay={(i % 3) * 90}>
+              <div className="group relative h-full rounded-2xl border border-neutral-200 bg-white p-6 transition-all hover:border-brand-300 hover:shadow-soft-lg">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100">
+                  <f.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-5 font-display text-lg font-semibold">{f.title}</h3>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-neutral-600">
+                  {f.desc}
+                </p>
               </div>
-              <h3 className="mt-5 font-display text-lg font-semibold">{f.title}</h3>
-              <p className="mt-2 text-[14.5px] leading-relaxed text-neutral-600">
-                {f.desc}
-              </p>
-            </div>
+            </Reveal>
           ))}
+        </div>
+      </section>
+
+      {/* SPLIT — Transit / Port */}
+      <section className="mx-auto max-w-6xl px-6 py-12 md:py-20">
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <Reveal className="relative">
+            <div className="relative overflow-hidden rounded-3xl shadow-soft-lg ring-1 ring-black/5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={IMG.port}
+                alt="Port à conteneurs — suivi du transit maritime"
+                className="h-[280px] w-full object-cover md:h-[420px]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-950/60 to-transparent" />
+              <div className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur-md ring-1 ring-white/25">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-400" />
+                Suivi temps réel · Port de Cotonou
+              </div>
+            </div>
+            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-tr from-accent-400/20 to-brand-400/20 blur-3xl" />
+          </Reveal>
+
+          <Reveal delay={120}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-600">
+              Transit &amp; dédouanement
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight md:text-4xl">
+              Du connaissement à la livraison,{" "}
+              <span className="text-neutral-500">sans rien perdre de vue.</span>
+            </h2>
+            <p className="mt-5 text-[15.5px] leading-relaxed text-neutral-600">
+              Suivez chaque véhicule à travers les 7 étapes du transit : arrivée
+              au port, admission temporaire, déclaration douane, mainlevée,
+              scellés, acheminement, livraison. Alertes automatiques sur les
+              véhicules immobilisés trop longtemps.
+            </p>
+            <ul className="mt-6 space-y-2.5 text-[14.5px]">
+              {[
+                "VIN scanné dès l'arrivée au port",
+                "Statut douane partagé avec vos équipes",
+                "Frais de transit rattachés au coût de revient",
+              ].map((t) => (
+                <li key={t} className="flex items-start gap-2.5">
+                  <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-accent-500" />
+                  <span className="text-neutral-700">{t}</span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
         </div>
       </section>
 
@@ -410,8 +464,15 @@ export default function DecouvrirPage() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-violet-800 py-24 text-white">
-        <div className="absolute inset-0 bg-mesh-brand opacity-40" aria-hidden />
+      <section className="relative overflow-hidden py-28 text-white">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={IMG.showroom}
+          alt=""
+          className="absolute inset-0 h-full w-full animate-ken-burns object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-700/95 via-brand-800/90 to-violet-900/95" />
+        <div className="absolute inset-0 bg-mesh-brand opacity-30" aria-hidden />
         <div className="relative mx-auto max-w-3xl px-6 text-center">
           <h2 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">
             Prêt à faire décoller votre parc automobile ?
