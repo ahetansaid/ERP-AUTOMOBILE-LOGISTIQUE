@@ -7,6 +7,7 @@ import type { VehicleListItem } from "@/types/vehicle";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PageHero } from "@/components/layout/PageHero";
 
 function pickVehicle(r: Record<string, unknown>): VehicleListItem {
   const purchasePrice = (r.purchase_price as number) ?? (r.purchasePrice as number);
@@ -144,12 +145,11 @@ export default function StockDisponiblePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Stock disponible</h1>
-        <p className="mt-1 text-slate-600">
-          Véhicules au parc non encore mis en vente.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Supply chain"
+        title="Stock disponible"
+        subtitle="Véhicules au parc non encore mis en vente."
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

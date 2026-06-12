@@ -6,6 +6,7 @@ import { apiGet, apiPatch } from "@/lib/api";
 import type { VehicleListItem } from "@/types/vehicle";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PageHero } from "@/components/layout/PageHero";
 
 const actionsSelectClass =
   "w-full min-w-[140px] rounded-xl border border-slate-300 bg-white px-3 py-2 pr-8 text-sm text-slate-700 shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200";
@@ -72,12 +73,11 @@ export default function StockRegulierPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Stock régulier</h1>
-        <p className="mt-1 text-slate-600">
-          Véhicules vendus et comptabilité totalement soldée.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Supply chain"
+        title="Stock régulier"
+        subtitle="Véhicules vendus et comptabilité totalement soldée."
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

@@ -6,6 +6,7 @@ import { apiGet } from "@/lib/api";
 import type { VehicleListItem } from "@/types/vehicle";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PageHero } from "@/components/layout/PageHero";
 
 function pickVehicle(r: Record<string, unknown>): VehicleListItem {
   const purchasePrice = (r.purchase_price as number) ?? (r.purchasePrice as number);
@@ -67,10 +68,11 @@ export default function VueGlobalePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Vue globale du parc</h1>
-        <p className="mt-1 text-slate-600">Tous les véhicules, filtres et recherche.</p>
-      </div>
+      <PageHero
+        eyebrow="Supply chain"
+        title="Vue globale du parc"
+        subtitle="Tous les véhicules, filtres et recherche."
+      />
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>}
       <div className="flex flex-wrap gap-4">
         <Input placeholder="Rechercher par VIN, marque, modèle..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />

@@ -7,6 +7,7 @@ import type { VehicleListItem } from "@/types/vehicle";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PageHero } from "@/components/layout/PageHero";
 
 /**
  * Règle métier : solde restant = prix de vente − montant payé (montant total de la facture = montant payé).
@@ -98,12 +99,11 @@ export default function StockNonRegulierPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Stock non régulier</h1>
-        <p className="mt-1 text-slate-600">
-          Véhicules en vente dont le paiement n&apos;est pas encore totalement soldé.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Supply chain"
+        title="Stock non régulier"
+        subtitle="Véhicules en vente dont le paiement n'est pas encore totalement soldé."
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

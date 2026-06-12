@@ -7,6 +7,7 @@ import type { VehicleListItem } from "@/types/vehicle";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PageHero } from "@/components/layout/PageHero";
 
 function pickVehicle(r: Record<string, unknown>): VehicleListItem & { devis_cloture?: boolean } {
   return {
@@ -68,12 +69,11 @@ export default function AtelierPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Atelier / Maintenance</h1>
-        <p className="mt-1 text-slate-600">
-          Véhicules en maintenance. Clôture possible après émission du reçu du devis.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Supply chain"
+        title="Atelier / Maintenance"
+        subtitle="Véhicules en maintenance. Clôture possible après émission du reçu du devis."
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
