@@ -58,7 +58,7 @@ export default function DevisFichePage() {
       const list = (devisListRes as { workshopQuotes?: unknown[] })?.workshopQuotes ?? [];
       const found = (list as Record<string, unknown>[]).find((x) => Number(x.id) === Number(id));
       const raw = (receiptsRes as { receipts?: unknown[] })?.receipts ?? [];
-      const all = (raw as Record<string, unknown>[]) as ReceiptRow[];
+      const all = raw as unknown as ReceiptRow[];
       const forDevis = all.filter((r) => {
         const did = r.devis_id ?? (r as Record<string, unknown>).devisId;
         return did != null && Number(did) === Number(id);
