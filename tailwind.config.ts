@@ -138,10 +138,42 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(4px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(18px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "ken-burns": {
+          "0%": { transform: "scale(1) translate3d(0,0,0)" },
+          "100%": { transform: "scale(1.12) translate3d(-1%, -1%, 0)" },
+        },
+        "float-y": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "gradient-pan": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "100%": { backgroundPosition: "100% 50%" },
+        },
+        "blob": {
+          "0%, 100%": { transform: "translate(0,0) scale(1)" },
+          "33%": { transform: "translate(20px,-30px) scale(1.1)" },
+          "66%": { transform: "translate(-15px,15px) scale(0.95)" },
+        },
+        "sweep": {
+          "0%": { transform: "translateX(-120%)" },
+          "100%": { transform: "translateX(120%)" },
+        },
       },
       animation: {
         shimmer: "shimmer 2s linear infinite",
         "fade-in": "fade-in 200ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "fade-up": "fade-up 700ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "ken-burns": "ken-burns 20s ease-in-out infinite alternate",
+        "float-y": "float-y 6s ease-in-out infinite",
+        "float-y-slow": "float-y 9s ease-in-out infinite",
+        "gradient-pan": "gradient-pan 6s ease-in-out infinite alternate",
+        blob: "blob 18s ease-in-out infinite",
+        sweep: "sweep 2.5s ease-in-out infinite",
       },
       backgroundImage: {
         "mesh-brand":
