@@ -4,8 +4,9 @@
  * actions optionnelles (children).
  */
 
+// Photo Pexels — circulation urbaine à Lagos (contexte africain).
 const DEFAULT_IMAGE =
-  "https://images.pexels.com/photos/395537/pexels-photo-395537.jpeg?auto=compress&cs=tinysrgb&w=1000";
+  "https://images.pexels.com/photos/11219429/pexels-photo-11219429.jpeg?auto=compress&cs=tinysrgb&w=1000";
 
 export function PageHero({
   eyebrow,

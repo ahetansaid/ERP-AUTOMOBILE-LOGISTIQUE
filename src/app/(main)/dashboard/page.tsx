@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 
 const DASH_HERO =
-  "https://images.pexels.com/photos/395537/pexels-photo-395537.jpeg?auto=compress&cs=tinysrgb&w=1200";
+  "https://images.pexels.com/photos/16206733/pexels-photo-16206733.jpeg?auto=compress&cs=tinysrgb&w=1200";
 
 function formatFcfa(value: number | undefined): string {
   if (value == null) return "—";

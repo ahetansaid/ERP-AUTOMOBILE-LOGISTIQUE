@@ -6,7 +6,7 @@ import Link from "next/link";
 const SLIDES = [
   {
     image:
-      "https://images.pexels.com/photos/395537/pexels-photo-395537.jpeg?auto=compress&cs=tinysrgb&w=1600",
+      "https://images.pexels.com/photos/16206733/pexels-photo-16206733.jpeg?auto=compress&cs=tinysrgb&w=1600",
     eyebrow: "Gestion de parc",
     title: "Votre stock,",
     highlight: "maîtrisé de bout en bout.",
@@ -15,7 +15,7 @@ const SLIDES = [
   },
   {
     image:
-      "https://images.pexels.com/photos/20581299/pexels-photo-20581299.jpeg?auto=compress&cs=tinysrgb&w=1600",
+      "https://images.pexels.com/photos/15183531/pexels-photo-15183531.jpeg?auto=compress&cs=tinysrgb&w=1600",
     eyebrow: "Transit & douane",
     title: "Le transit,",
     highlight: "sans aucun angle mort.",
@@ -24,7 +24,7 @@ const SLIDES = [
   },
   {
     image:
-      "https://images.pexels.com/photos/7144207/pexels-photo-7144207.jpeg?auto=compress&cs=tinysrgb&w=1600",
+      "https://images.pexels.com/photos/8425040/pexels-photo-8425040.jpeg?auto=compress&cs=tinysrgb&w=1600",
     eyebrow: "Vente & encaissement",
     title: "De l'achat",
     highlight: "à la livraison client.",

@@ -15,14 +15,15 @@ export const metadata = {
     "Gérez votre import de véhicules de A à Z : achats, transit, atelier, facturation, trésorerie. Essai 14 jours gratuit.",
 };
 
+// Photos Pexels — contexte africain (Lagos, Ibadan, atelier nigérian, business).
 const IMG = {
-  cars: "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1100",
-  port: "https://images.pexels.com/photos/20581299/pexels-photo-20581299.jpeg?auto=compress&cs=tinysrgb&w=1100",
-  deal: "https://images.pexels.com/photos/7144207/pexels-photo-7144207.jpeg?auto=compress&cs=tinysrgb&w=1100",
-  lot: "https://images.pexels.com/photos/395537/pexels-photo-395537.jpeg?auto=compress&cs=tinysrgb&w=900",
-  garage: "https://images.pexels.com/photos/8986105/pexels-photo-8986105.jpeg?auto=compress&cs=tinysrgb&w=900",
-  keys: "https://images.pexels.com/photos/7144201/pexels-photo-7144201.jpeg?auto=compress&cs=tinysrgb&w=900",
-  night: "https://images.pexels.com/photos/1685111/pexels-photo-1685111.jpeg?auto=compress&cs=tinysrgb&w=1600",
+  cars: "https://images.pexels.com/photos/11219429/pexels-photo-11219429.jpeg?auto=compress&cs=tinysrgb&w=1100",
+  port: "https://images.pexels.com/photos/8608890/pexels-photo-8608890.jpeg?auto=compress&cs=tinysrgb&w=1100",
+  deal: "https://images.pexels.com/photos/8730895/pexels-photo-8730895.jpeg?auto=compress&cs=tinysrgb&w=1100",
+  lot: "https://images.pexels.com/photos/16206733/pexels-photo-16206733.jpeg?auto=compress&cs=tinysrgb&w=900",
+  garage: "https://images.pexels.com/photos/12555010/pexels-photo-12555010.jpeg?auto=compress&cs=tinysrgb&w=900",
+  keys: "https://images.pexels.com/photos/8425040/pexels-photo-8425040.jpeg?auto=compress&cs=tinysrgb&w=900",
+  night: "https://images.pexels.com/photos/30677598/pexels-photo-30677598.jpeg?auto=compress&cs=tinysrgb&w=1600",
 };
 
 const SERVICES = [

@@ -6,8 +6,9 @@
  * carte en verre dépoli. Le contenu du formulaire est passé en `children`.
  */
 
+// Photo Pexels — vue aérienne de circulation à Lagos (contexte africain).
 export const HERO_IMAGE =
-  "https://images.pexels.com/photos/395537/pexels-photo-395537.jpeg?auto=compress&cs=tinysrgb&w=1400";
+  "https://images.pexels.com/photos/16206733/pexels-photo-16206733.jpeg?auto=compress&cs=tinysrgb&w=1400";
 
 const IconCar = (p: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
