@@ -292,10 +292,10 @@ export default function VehiculeHistoriquePage() {
             </dl>
           </div>
           <div>
-            <h3 className="mb-2 font-medium text-slate-700 dark:text-slate-300">Informations d'achat</h3>
+            <h3 className="mb-2 font-medium text-slate-700 dark:text-slate-300">Informations d&apos;achat</h3>
             <dl className="space-y-1 text-sm">
-              <div><dt className="text-slate-500">Date d'achat</dt><dd>{v.purchase_date ? new Date(v.purchase_date).toLocaleDateString("fr-FR") : "—"}</dd></div>
-              <div><dt className="text-slate-500">Prix d'achat</dt><dd>{formatFcfa(prixAchat)}</dd></div>
+              <div><dt className="text-slate-500">Date d&apos;achat</dt><dd>{v.purchase_date ? new Date(v.purchase_date).toLocaleDateString("fr-FR") : "—"}</dd></div>
+              <div><dt className="text-slate-500">Prix d&apos;achat</dt><dd>{formatFcfa(prixAchat)}</dd></div>
               <div><dt className="text-slate-500">Frais transport</dt><dd>{formatFcfa(transport)}</dd></div>
               <div><dt className="text-slate-500">Fournisseur</dt><dd>{v.supplier_name ?? "—"}</dd></div>
               <div><dt className="text-slate-500">Statut</dt><dd><Badge>{v.status ?? "—"}</Badge></dd></div>

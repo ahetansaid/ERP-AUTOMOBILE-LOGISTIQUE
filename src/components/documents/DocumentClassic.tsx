@@ -58,7 +58,7 @@ export function DocumentClassic({ data }: { data: DocumentData }) {
           )}
           {data.validUntil && (
             <p className="mt-0.5 text-[11px] text-neutral-600">
-              Valide jusqu'au : {formatDate(data.validUntil)}
+              Valide jusqu&apos;au : {formatDate(data.validUntil)}
             </p>
           )}
         </div>

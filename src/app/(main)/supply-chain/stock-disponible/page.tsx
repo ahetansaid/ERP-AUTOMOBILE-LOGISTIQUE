@@ -204,9 +204,12 @@ export default function StockDisponiblePage() {
                       })()}
                     </td>
                     <td className="p-3">
-                      {(v.purchase_price_fcfa ?? v.purchase_price) != null
-                        ? `${(v.purchase_price_fcfa ?? v.purchase_price).toLocaleString("fr-FR")} FCFA`
-                        : "—"}
+                      {(() => {
+                        const prixAchat = v.purchase_price_fcfa ?? v.purchase_price;
+                        return prixAchat != null
+                          ? `${prixAchat.toLocaleString("fr-FR")} FCFA`
+                          : "—";
+                      })()}
                     </td>
                     <td className="p-3">
                       {editingPriceId === v.id ? (

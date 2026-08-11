@@ -100,21 +100,24 @@ export default function VueGlobalePage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((v) => (
-                  <tr key={v.id} className="border-b border-slate-100">
-                    <td className="p-3 font-mono">{v.vin ?? "—"}</td>
-                    <td className="p-3">{v.brand ?? "—"} {v.model ?? ""}</td>
-                    <td className="p-3">{v.year ?? "—"}</td>
-                    <td className="p-3">{v.status ?? "—"}</td>
-                    <td className="p-3">
-                      {(v.purchase_price_fcfa ?? v.purchase_price) != null
-                        ? `${(v.purchase_price_fcfa ?? v.purchase_price).toLocaleString("fr-FR")} FCFA`
-                        : "—"}
-                    </td>
-                    <td className="p-3">{v.price_sale != null ? v.price_sale.toLocaleString("fr-FR") : "—"}</td>
-                    <td className="p-3"><Link href={`/vehicules/${v.id}`} className="text-sm text-primary-600 hover:underline">Fiche</Link></td>
-                  </tr>
-                ))}
+                {filtered.map((v) => {
+                  const prixAchat = v.purchase_price_fcfa ?? v.purchase_price;
+                  return (
+                    <tr key={v.id} className="border-b border-slate-100">
+                      <td className="p-3 font-mono">{v.vin ?? "—"}</td>
+                      <td className="p-3">{v.brand ?? "—"} {v.model ?? ""}</td>
+                      <td className="p-3">{v.year ?? "—"}</td>
+                      <td className="p-3">{v.status ?? "—"}</td>
+                      <td className="p-3">
+                        {prixAchat != null
+                          ? `${prixAchat.toLocaleString("fr-FR")} FCFA`
+                          : "—"}
+                      </td>
+                      <td className="p-3">{v.price_sale != null ? v.price_sale.toLocaleString("fr-FR") : "—"}</td>
+                      <td className="p-3"><Link href={`/vehicules/${v.id}`} className="text-sm text-primary-600 hover:underline">Fiche</Link></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

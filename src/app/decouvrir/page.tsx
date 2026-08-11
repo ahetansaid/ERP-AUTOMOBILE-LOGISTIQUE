@@ -152,7 +152,7 @@ export default function DecouvrirPage() {
               </h2>
               <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-neutral-600">
                 ParcAuto Manager parle le langage des importateurs et concessionnaires
-                d'Afrique de l'Ouest : FCFA, mobile money, transit maritime, dédouanement.
+                d&apos;Afrique de l&apos;Ouest : FCFA, mobile money, transit maritime, dédouanement.
               </p>
             </Reveal>
             <div className="grid gap-6 sm:grid-cols-2">
@@ -258,7 +258,7 @@ export default function DecouvrirPage() {
         <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-6 px-6 py-24 text-center text-white md:flex-row md:justify-between md:text-left">
           <div>
             <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">Prêt à faire décoller votre parc ?</h2>
-            <p className="mt-3 max-w-xl text-white/80">14 jours gratuits, sans carte. Onboarding guidé en moins d'une heure avec votre premier véhicule enregistré.</p>
+            <p className="mt-3 max-w-xl text-white/80">14 jours gratuits, sans carte. Onboarding guidé en moins d&apos;une heure avec votre premier véhicule enregistré.</p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
             <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-7 text-[15px] font-semibold text-brand-700 shadow-lg transition-transform hover:-translate-y-0.5">
@@ -313,7 +313,7 @@ export default function DecouvrirPage() {
                 <span className="text-[15px] font-semibold tracking-tight">ParcAuto Manager</span>
               </div>
               <p className="mt-4 max-w-xs text-sm leading-relaxed">
-                L'ERP d'import automobile pensé pour l'Afrique de l'Ouest. Du port à la livraison, sur une seule plateforme.
+                L&apos;ERP d&apos;import automobile pensé pour l&apos;Afrique de l&apos;Ouest. Du port à la livraison, sur une seule plateforme.
               </p>
             </div>
             <div>

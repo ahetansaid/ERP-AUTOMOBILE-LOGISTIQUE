@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet } from "@/lib/api";
+import { asRecords, pickNumber, pickString } from "@/lib/records";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 
@@ -55,31 +56,35 @@ export default function DevisFichePage() {
         apiGet<{ workshopQuotes?: unknown[] }>("/devis"),
         apiGet<{ receipts?: unknown[] }>("/receipts"),
       ]);
-      const list = (devisListRes as { workshopQuotes?: unknown[] })?.workshopQuotes ?? [];
-      const found = (list as Record<string, unknown>[]).find((x) => Number(x.id) === Number(id));
-      const raw = (receiptsRes as { receipts?: unknown[] })?.receipts ?? [];
-      const all = raw as unknown as ReceiptRow[];
-      const forDevis = all.filter((r) => {
-        const did = r.devis_id ?? (r as Record<string, unknown>).devisId;
-        return did != null && Number(did) === Number(id);
-      });
-      const receiptRows = forDevis.map((x) => {
-        const r = x as Record<string, unknown>;
-        return {
-          id: (r.id as number) ?? 0,
-          devis_id: (r.devis_id as number) ?? (r.devisId as number),
-          amount: (r.amount as number) ?? (r.montant as number) ?? 0,
-          payment_date: (r.payment_date as string) ?? (r.paymentDate as string) ?? "",
-          payment_method: (r.payment_method as string) ?? (r.paymentMethod as string) ?? "",
-        };
-      });
+      const found = asRecords(devisListRes?.workshopQuotes).find(
+        (x) => pickNumber(x, "id") === Number(id)
+      );
+      const receiptRows = asRecords(receiptsRes?.receipts)
+        .filter((r) => pickNumber(r, "devis_id", "devisId") === Number(id))
+        .map((r) => ({
+          id: pickNumber(r, "id") ?? 0,
+          devis_id: pickNumber(r, "devis_id", "devisId"),
+          amount: pickNumber(r, "amount", "montant") ?? 0,
+          payment_date: pickString(r, "payment_date", "paymentDate") ?? "",
+          payment_method: pickString(r, "payment_method", "paymentMethod") ?? "",
+        }));
       setReceipts(receiptRows);
       if (found) {
-        const r = found as Record<string, unknown>;
         setDevis({
-          ...(found as DevisDetail),
-          amount: (r.amount as number) ?? (r.montant as number),
-          closed_at: (r.closed_at as string) ?? (r.closedAt as string),
+          id: pickNumber(found, "id") ?? Number(id),
+          vehicle_id: pickNumber(found, "vehicle_id", "vehicleId"),
+          prestataire: pickString(found, "prestataire"),
+          amount: pickNumber(found, "amount", "montant"),
+          currency: pickString(found, "currency"),
+          description: pickString(found, "description"),
+          valid_until: pickString(found, "valid_until", "validUntil"),
+          status: pickString(found, "status"),
+          closed_at: pickString(found, "closed_at", "closedAt"),
+          vin: pickString(found, "vin"),
+          brand: pickString(found, "brand"),
+          model: pickString(found, "model"),
+          paid_amount: pickNumber(found, "paid_amount", "paidAmount"),
+          remaining_amount: pickNumber(found, "remaining_amount", "remainingAmount"),
         });
       } else {
         setDevis(null);
@@ -177,7 +182,7 @@ export default function DevisFichePage() {
           )}
           <div>
             <dt className="text-sm text-slate-500">Montant total du devis</dt>
-            <dd className="font-semibold text-lg">{formatFcfa(total)} {(d as Record<string, string>).currency ?? "FCFA"}</dd>
+            <dd className="font-semibold text-lg">{formatFcfa(total)} {d.currency ?? "FCFA"}</dd>
           </div>
           <div>
             <dt className="text-sm text-slate-500">Montants payés</dt>

@@ -15,7 +15,19 @@ function formatFcfa(value: number | undefined): string {
   return `${value.toLocaleString("fr-FR")} FCFA`;
 }
 
-const statCards = [
+/** `key` est contraint aux champs réels de DashboardStats : une faute de frappe
+ *  dans une clé devient une erreur de compilation au lieu d'une carte vide. */
+type StatCard = {
+  key: keyof DashboardStats;
+  label: string;
+  href?: string;
+  linkLabel?: string;
+  accent?: string;
+  icon: string;
+  format?: (value: number) => string;
+};
+
+const statCards: StatCard[] = [
   {
     key: "stockDisponible",
     label: "Stocks disponible",
@@ -50,7 +62,7 @@ const statCards = [
   },
 ];
 
-const statCards2 = [
+const statCards2: StatCard[] = [
   { key: "nombreClients", label: "Clients actifs", icon: "👥" },
   { key: "caSemaine", label: "CA Semaine", format: formatFcfa, icon: "📈" },
   { key: "caMois", label: "CA Mois", format: formatFcfa, icon: "💰" },
@@ -163,7 +175,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-sm font-medium text-slate-500">{label}</p>
             <p className="mt-1 text-2xl font-bold text-slate-800">
-              {(stats as Record<string, unknown>)?.[key] ?? "—"}
+              {stats?.[key] ?? "—"}
             </p>
             {href && (
               <Link
@@ -179,8 +191,9 @@ export default function DashboardPage() {
 
       <div className="grid animate-fade-up gap-4 [animation-delay:140ms] sm:grid-cols-2 lg:grid-cols-4">
         {statCards2.map(({ key, label, format, href, linkLabel, icon }) => {
-          const value = (stats as Record<string, unknown>)?.[key];
-          const display = format ? (format as (v: number) => string)(value as number) : value;
+          const value = stats?.[key];
+          const display =
+            format && typeof value === "number" ? format(value) : value;
           return (
             <Card key={key}>
               <div className="flex items-start justify-between">

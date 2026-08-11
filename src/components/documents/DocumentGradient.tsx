@@ -100,7 +100,7 @@ export function DocumentGradient({ data }: { data: DocumentData }) {
               <p>Émise : {formatDate(data.issuedAt)}</p>
               {data.dueDate && <p>Échéance : {formatDate(data.dueDate)}</p>}
               {data.validUntil && (
-                <p>Valide jusqu'au : {formatDate(data.validUntil)}</p>
+                <p>Valide jusqu&apos;au : {formatDate(data.validUntil)}</p>
               )}
             </div>
           </div>

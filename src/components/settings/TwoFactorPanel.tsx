@@ -143,7 +143,7 @@ export function TwoFactorPanel() {
           <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
             <ol className="ml-5 list-decimal space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
               <li>
-                Ouvrez votre application d'authentification (Google Authenticator,
+                Ouvrez votre application d&apos;authentification (Google Authenticator,
                 Authy, 1Password…)
               </li>
               <li>Scannez le QR code ci-dessous ou saisissez le secret manuellement</li>

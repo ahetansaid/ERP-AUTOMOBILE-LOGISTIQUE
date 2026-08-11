@@ -3,15 +3,20 @@
  * Alignement avec les réponses backend (snake_case possible).
  */
 
+/**
+ * Miroir exact de l'enum Prisma `UserRole` (backend `prisma/schema.prisma`).
+ * Toute valeur ajoutée côté backend doit l'être ici, et inversement :
+ * le JWT transporte cette valeur brute et le RBAC backend l'utilise telle quelle.
+ */
 export type UserRole =
-  | "SUPER_ADMIN"
   | "ADMIN"
-  | "COMPTABLE"
-  | "AGENT_TRANSIT"
-  | "COMMERCIAL"
-  | "RESPONSABLE_STOCK"
-  | "DIRIGEANT"
-  | "CLIENT";
+  | "MANAGER"
+  | "SALES"
+  | "ACCOUNTING"
+  | "WORKSHOP"
+  | "LOGISTICS"
+  | "USER"
+  | "READ_ONLY";
 
 export interface User {
   id: number;

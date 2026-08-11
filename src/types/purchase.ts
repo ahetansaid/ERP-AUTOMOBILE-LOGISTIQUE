@@ -54,6 +54,8 @@ export interface PurchaseVehicleInDetail {
   color?: string;
   purchase_id?: number;
   status?: string;
+  /** Prix d'achat converti en FCFA (normalisé à la réception). */
+  purchase_price_fcfa?: number;
 }
 
 export interface SupplierOption {

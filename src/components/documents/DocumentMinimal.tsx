@@ -175,7 +175,7 @@ export function DocumentMinimal({ data }: { data: DocumentData }) {
           )}
           {data.kind === "DEVIS" && data.validUntil && (
             <p className="text-[13px] text-neutral-900">
-              Devis valable jusqu'au{" "}
+              Devis valable jusqu&apos;au{" "}
               <span className="font-semibold">{formatDate(data.validUntil)}</span>
               .
             </p>
