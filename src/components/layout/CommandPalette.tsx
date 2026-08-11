@@ -62,6 +62,12 @@ const COMMANDS: Command[] = [
     keywords: ["prestataire", "fournisseur", "transitaire", "partenaire", "soudeur", "peintre"],
   },
   { label: "Utilisateurs", group: "Admin", href: "/utilisateurs" },
+  {
+    label: "Installation",
+    group: "Admin",
+    href: "/installation",
+    keywords: ["modele", "preset", "metier", "demarrage", "configuration"],
+  },
   { label: "Paramètres", group: "Admin", href: "/parametres" },
   {
     label: "Alertes",

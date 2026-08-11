@@ -32,6 +32,7 @@ const nav: NavItem[] = [
   { href: "/crm", label: "CRM Clients", group: "CRM" },
   { href: "/tiers", label: "Tiers", group: "CRM" },
   { href: "/utilisateurs", label: "Utilisateurs", group: "Admin" },
+  { href: "/installation", label: "Installation", group: "Paramètres" },
   { href: "/parametres", label: "Paramètres", group: "Paramètres" },
   { href: "/alertes", label: "Alertes", group: "Paramètres" },
   { href: "/notifications", label: "Notifications", group: "Paramètres" },
