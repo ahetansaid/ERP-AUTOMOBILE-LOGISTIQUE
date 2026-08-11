@@ -14,6 +14,25 @@
   --sidebar-bg: linear-gradient(180deg, #1e1b4b 0%, #0f0b2e 100%);
   --card-shadow: 0 4px 6px -1px rgba(9, 9, 11, 0.05), 0 2px 4px -2px rgba(9, 9, 11, 0.04);
   --card-shadow-hover: 0 20px 25px -5px rgba(9, 9, 11, 0.08), 0 8px 10px -6px rgba(9, 9, 11, 0.04);
+
+  /* Tokens de graphiques.
+     La rampe est mono-teinte et ordinale : ses paliers sont assez écartés en
+     clarté pour rester distinguables, y compris en vision daltonienne. Les
+     couleurs sémantiques restent réservées aux états. */
+  --chart-1: #818cf8;
+  --chart-2: #6366f1;
+  --chart-3: #4f46e5;
+  --chart-4: #3730a3;
+  --chart-5: #1e1b4b;
+  --chart-ok: #059669;
+  --chart-warn: #b45309;
+  --chart-danger: #b91c1c;
+  --chart-grid: #e9e9ec;
+  --chart-line: #d4d4d8;
+  --chart-track: #f4f4f5;
+  --chart-muted: #a1a1aa;
+  --chart-ink: #18181b;
+  --chart-surface: #ffffff;
 }
 
 .dark {
@@ -21,6 +40,24 @@
   --background: #09090b;
   --surface: #18181b;
   --border: #27272a;
+
+  /* La rampe est reprise dans l'autre sens : sur fond sombre, c'est le palier
+     clair qui doit porter la part dominante. Une inversion mécanique des
+     couleurs produirait des contrastes illisibles. */
+  --chart-1: #c7d2fe;
+  --chart-2: #a5b4fc;
+  --chart-3: #818cf8;
+  --chart-4: #6366f1;
+  --chart-5: #4338ca;
+  --chart-ok: #34d399;
+  --chart-warn: #fbbf24;
+  --chart-danger: #f87171;
+  --chart-grid: #232327;
+  --chart-line: #3f3f46;
+  --chart-track: #27272a;
+  --chart-muted: #71717a;
+  --chart-ink: #f4f4f5;
+  --chart-surface: #18181b;
 }
 
 body {
