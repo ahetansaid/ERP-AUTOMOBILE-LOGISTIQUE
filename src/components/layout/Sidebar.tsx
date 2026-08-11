@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { APP_NAME } from "@/lib/constants";
+import { APP_NAME, roleLabel } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
 
 type NavItem = {
@@ -26,11 +26,14 @@ const nav: NavItem[] = [
   { href: "/comptabilite/tresorerie", label: "Trésorerie", group: "Comptabilité" },
   { href: "/comptabilite/proforma", label: "Pro forma", group: "Comptabilité" },
   { href: "/comptabilite/rapports", label: "Rapports", group: "Comptabilité" },
+  { href: "/comptabilite/reconciliation", label: "Réconciliation", group: "Comptabilité" },
   { href: "/transit", label: "Transit", group: "Transit" },
   { href: "/transit/suivi", label: "Suivi transit", group: "Transit" },
   { href: "/crm", label: "CRM Clients", group: "CRM" },
+  { href: "/tiers", label: "Tiers", group: "CRM" },
   { href: "/utilisateurs", label: "Utilisateurs", group: "Admin" },
   { href: "/parametres", label: "Paramètres", group: "Paramètres" },
+  { href: "/alertes", label: "Alertes", group: "Paramètres" },
   { href: "/notifications", label: "Notifications", group: "Paramètres" },
 ];
 
@@ -217,7 +220,7 @@ export function Sidebar({ onOpenCommand }: { onOpenCommand?: () => void }) {
               {displayName}
             </span>
             <span className="block truncate text-[11px] text-neutral-500 dark:text-neutral-400">
-              {user?.role ?? "—"}
+              {roleLabel(user?.role)}
             </span>
           </span>
         </Link>

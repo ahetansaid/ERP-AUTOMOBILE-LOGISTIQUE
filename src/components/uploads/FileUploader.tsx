@@ -3,13 +3,30 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
-type UploadKind =
+/** Miroir de l'enum `UploadKind` du backend (prisma/schema.prisma). */
+export type UploadKind =
   | "VEHICLE_PHOTO"
   | "PURCHASE_DOCUMENT"
+  // Documents produits par la plateforme
+  | "INVOICE_PDF"
+  | "RECEIPT_PDF"
+  | "QUOTE_PDF"
+  | "PROFORMA_PDF"
+  // Pièces fiscales établies hors plateforme, puis rattachées
+  | "FACTURE_NORMALISEE"
+  | "RECU_NORMALISE"
+  | "DOCUMENT_DOUANE"
   | "TRANSIT_DOCUMENT"
   | "COMPANY_LOGO"
   | "USER_AVATAR"
   | "OTHER";
+
+/** Références d'une pièce externe — exigées par le backend pour les types fiscaux. */
+export interface DocMeta {
+  docNumber?: string;
+  docDate?: string;
+  docAmount?: number | string;
+}
 
 export interface FileUploaderProps {
   kind: UploadKind;
@@ -19,6 +36,7 @@ export interface FileUploaderProps {
   maxSizeMb?: number;
   label?: string;
   multiple?: boolean;
+  docMeta?: DocMeta;
   onUploaded?: (upload: { id: number; fileName: string; mimeType: string }) => void;
 }
 
@@ -30,6 +48,7 @@ export function FileUploader({
   maxSizeMb = 25,
   label = "Ajouter un fichier",
   multiple = false,
+  docMeta,
   onUploaded,
 }: FileUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +69,11 @@ export function FileUploader({
         fd.append("kind", kind);
         if (resource) fd.append("resource", resource);
         if (resourceId != null) fd.append("resourceId", String(resourceId));
+        if (docMeta?.docNumber) fd.append("docNumber", docMeta.docNumber);
+        if (docMeta?.docDate) fd.append("docDate", docMeta.docDate);
+        if (docMeta?.docAmount != null && docMeta.docAmount !== "") {
+          fd.append("docAmount", String(docMeta.docAmount));
+        }
 
         const base =
           process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiGet } from "@/lib/api";
 
 type Command = {
   label: string;
@@ -10,7 +11,23 @@ type Command = {
   action?: () => void;
   /** Mots-clés additionnels pour la recherche floue */
   keywords?: string[];
+  /** Sous-titre affiché pour les résultats venant du serveur */
+  subtitle?: string | null;
+  /** Étiquette courte : VÉH, CNT, FAC… */
+  badge?: string;
 };
+
+/** Un résultat de la recherche universelle côté serveur. */
+type SearchHit = {
+  type: string;
+  id: number;
+  badge: string;
+  label: string;
+  subtitle?: string | null;
+};
+
+/** Types disposant d'un dossier 360°. Les autres pointent vers leur liste. */
+const DOSSIER_TYPES = ["Vehicle", "Purchase", "Invoice", "Partner"];
 
 // Catalogue des commandes/actions rapides.
 // Organisé comme la sidebar + quelques « actions » (création rapide).
@@ -29,11 +46,29 @@ const COMMANDS: Command[] = [
   { label: "Trésorerie", group: "Comptabilité", href: "/comptabilite/tresorerie" },
   { label: "Pro forma", group: "Comptabilité", href: "/comptabilite/proforma" },
   { label: "Rapports", group: "Comptabilité", href: "/comptabilite/rapports" },
+  {
+    label: "Réconciliation",
+    group: "Comptabilité",
+    href: "/comptabilite/reconciliation",
+    keywords: ["grand", "livre", "ledger", "bascule", "ecart", "double", "ecriture"],
+  },
   { label: "Transit", group: "Transit", href: "/transit" },
   { label: "Suivi transit", group: "Transit", href: "/transit/suivi" },
   { label: "CRM Clients", group: "CRM", href: "/crm" },
+  {
+    label: "Tiers",
+    group: "CRM",
+    href: "/tiers",
+    keywords: ["prestataire", "fournisseur", "transitaire", "partenaire", "soudeur", "peintre"],
+  },
   { label: "Utilisateurs", group: "Admin", href: "/utilisateurs" },
   { label: "Paramètres", group: "Admin", href: "/parametres" },
+  {
+    label: "Alertes",
+    group: "Admin",
+    href: "/alertes",
+    keywords: ["anomalie", "regle", "seuil", "dormant", "echue", "incoherent"],
+  },
   { label: "Notifications", group: "Admin", href: "/notifications" },
   {
     label: "Aperçu des documents (templates)",
@@ -76,9 +111,48 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  const [hits, setHits] = useState<Command[]>([]);
+
+  // Recherche universelle : on interroge le serveur dès trois caractères.
+  // La navigation locale reste instantanée ; les données arrivent ensuite.
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 3) {
+      setHits([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await apiGet<{ results?: SearchHit[] }>(
+          `/search?q=${encodeURIComponent(q)}`
+        );
+        if (cancelled) return;
+        setHits(
+          (res?.results ?? []).map((r) => ({
+            label: r.label,
+            subtitle: r.subtitle,
+            badge: r.badge,
+            group: "Résultats",
+            href: DOSSIER_TYPES.includes(r.type)
+              ? `/dossier/${r.type}/${r.id}`
+              : undefined,
+          }))
+        );
+      } catch {
+        // Une recherche qui échoue ne doit pas bloquer la navigation.
+        if (!cancelled) setHits([]);
+      }
+    }, 180);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
   const filtered = useMemo(
-    () => COMMANDS.filter((c) => matches(c, query)),
-    [query]
+    () => [...hits, ...COMMANDS.filter((c) => matches(c, query))],
+    [query, hits]
   );
 
   // Groupement
@@ -169,7 +243,7 @@ export function CommandPalette({
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher une page, une action…"
+            placeholder="VIN, conteneur, navire, facture, tiers…"
             className="h-12 flex-1 bg-transparent text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:outline-none dark:text-neutral-100"
             aria-label="Rechercher"
           />
@@ -195,7 +269,7 @@ export function CommandPalette({
                   const idx = flat.indexOf(cmd);
                   const isActive = idx === activeIndex;
                   return (
-                    <li key={cmd.label}>
+                    <li key={`${cmd.group}-${cmd.label}-${cmd.href ?? ""}`}>
                       <button
                         type="button"
                         onMouseEnter={() => setActiveIndex(idx)}
@@ -210,7 +284,19 @@ export function CommandPalette({
                             : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
                         }`}
                       >
-                        <span className="min-w-0 flex-1 truncate">{cmd.label}</span>
+                        {cmd.badge && (
+                          <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-600 dark:bg-neutral-800 dark:text-brand-300">
+                            {cmd.badge}
+                          </span>
+                        )}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">{cmd.label}</span>
+                          {cmd.subtitle && (
+                            <span className="block truncate font-mono text-[11px] text-neutral-500">
+                              {cmd.subtitle}
+                            </span>
+                          )}
+                        </span>
                         {isActive && (
                           <kbd className="hidden shrink-0 items-center rounded border border-neutral-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-neutral-500 sm:inline-flex dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">
                             ↵

@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiGet, apiPatch } from "@/lib/api";
-import type { PurchaseDetail } from "@/types/purchase";
+import type { PurchaseDetail, PurchaseVehicleInDetail } from "@/types/purchase";
+import { asRecord, asRecords, pickNumber, pickString } from "@/lib/records";
+import { ContainerCosts } from "@/components/purchases/ContainerCosts";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -22,48 +24,69 @@ export default function AchatDetailPage() {
     if (!id) return;
     try {
       setError(null);
-      const res = await apiGet<{ purchase?: PurchaseDetail; vehicles?: PurchaseDetail["vehicles"] }>(
-        `/purchases/${id}`
+      const res = asRecord(await apiGet(`/purchases/${id}`));
+      // Le backend renvoie soit { purchase, vehicles }, soit l'achat à plat.
+      const raw = res.purchase !== undefined ? asRecord(res.purchase) : res;
+      const vehList = asRecords(
+        res.vehicles !== undefined ? res.vehicles : raw.vehicles
       );
-      const raw = (res as { purchase?: PurchaseDetail }).purchase ?? (res as PurchaseDetail);
-      const vehicles = (res as { vehicles?: PurchaseDetail["vehicles"] }).vehicles ?? raw?.vehicles;
-      const r = raw as Record<string, unknown>;
-      // Date arrivée = date du passage au statut Arrivé (backend peut renvoyer arrival_date, date_arrivee, arrived_at, etc.)
-      const arrivalDateRaw =
-        (raw?.arrival_date as string) ??
-        (r.date_arrivee as string) ??
-        (r.arrived_at as string) ??
-        (r.status_updated_at as string) ??
-        (r.updated_at as string);
-      // Montant total (FCFA) : backend peut renvoyer amount_fcfa, montant_fcfa, montantFCFA, total_fcfa, etc.
-      const vehList = vehicles ?? raw?.vehicles ?? [];
-      const amountFromApi =
-        (raw?.amount_fcfa as number) ??
-        (r.montant_fcfa as number) ??
-        (r.montantFCFA as number) ??
-        (r.total_fcfa as number) ??
-        (r.total_amount as number);
-      const amountFromVehicles = Array.isArray(vehList)
-        ? (vehList as Array<Record<string, unknown>>).reduce((sum, v) => {
-            const prix =
-              (v.purchase_price_fcfa as number) ??
-              (v.purchasePriceFcfa as number) ??
-              (v.montant_fcfa as number) ??
-              (v.montantFCFA as number) ??
-              0;
-            return sum + (typeof prix === "number" ? prix : 0);
-          }, 0)
-        : 0;
-      const amountFcfa = amountFromApi ?? (amountFromVehicles > 0 ? amountFromVehicles : undefined);
-      const p = raw
-        ? {
-            ...raw,
-            arrival_date: arrivalDateRaw || undefined,
-            amount_fcfa: amountFcfa,
-            vehicles: vehList,
-          }
-        : null;
-      setPurchase(p);
+
+      const vehicles: PurchaseVehicleInDetail[] = vehList.map((v) => ({
+        id: pickNumber(v, "id") ?? 0,
+        vin: pickString(v, "vin") ?? "",
+        brand: pickString(v, "brand", "marque"),
+        model: pickString(v, "model", "modele"),
+        year: pickNumber(v, "year", "annee"),
+        color: pickString(v, "color", "couleur"),
+        purchase_id: pickNumber(v, "purchase_id", "purchaseId"),
+        status: pickString(v, "status"),
+        purchase_price_fcfa: pickNumber(
+          v,
+          "purchase_price_fcfa",
+          "purchasePriceFcfa",
+          "montant_fcfa",
+          "montantFCFA"
+        ),
+      }));
+
+      // Montant total : fourni par l'API, sinon reconstitué depuis les véhicules.
+      const amountFromApi = pickNumber(
+        raw,
+        "amount_fcfa",
+        "montant_fcfa",
+        "montantFCFA",
+        "total_fcfa",
+        "total_amount"
+      );
+      const amountFromVehicles = vehicles.reduce(
+        (sum, v) => sum + (v.purchase_price_fcfa ?? 0),
+        0
+      );
+
+      setPurchase({
+        id: pickNumber(raw, "id") ?? Number(id),
+        supplier_name: pickString(raw, "supplier_name", "fournisseurNom"),
+        purchase_date: pickString(raw, "purchase_date", "dateAchat"),
+        // Date d'arrivée = passage au statut Arrivé ; le backend l'expose sous
+        // plusieurs noms selon la route.
+        arrival_date: pickString(
+          raw,
+          "arrival_date",
+          "date_arrivee",
+          "arrived_at",
+          "status_updated_at",
+          "updated_at"
+        ),
+        container_reference: pickString(raw, "container_reference", "conteneur"),
+        vessel: pickString(raw, "vessel", "navire"),
+        purchase_price: pickNumber(raw, "purchase_price"),
+        currency: pickString(raw, "currency"),
+        amount_fcfa:
+          amountFromApi ?? (amountFromVehicles > 0 ? amountFromVehicles : undefined),
+        type_achat: pickString(raw, "type_achat", "typeAchat"),
+        status: pickString(raw, "status") as PurchaseDetail["status"],
+        vehicles,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur chargement");
       setPurchase(null);
@@ -116,9 +139,8 @@ export default function AchatDetailPage() {
   }
 
   const p = purchase!;
-  const supplierName =
-    p.supplier_name ?? (p as Record<string, string>).fournisseurNom ?? "—";
-  const purchaseDateRaw = p.purchase_date ?? (p as Record<string, string>).dateAchat;
+  const supplierName = p.supplier_name ?? "—";
+  const purchaseDateRaw = p.purchase_date;
   const purchaseDate = purchaseDateRaw
     ? new Date(purchaseDateRaw).toLocaleDateString("fr-FR")
     : "—";
@@ -174,11 +196,11 @@ export default function AchatDetailPage() {
           </div>
           <div>
             <dt className="text-sm text-slate-500">Conteneur</dt>
-            <dd>{p.container_reference ?? (p as Record<string, string>).conteneur ?? "—"}</dd>
+            <dd>{p.container_reference ?? "—"}</dd>
           </div>
           <div>
             <dt className="text-sm text-slate-500">Navire</dt>
-            <dd>{p.vessel ?? (p as Record<string, string>).navire ?? "—"}</dd>
+            <dd>{p.vessel ?? "—"}</dd>
           </div>
           <div>
             <dt className="text-sm text-slate-500">Statut</dt>
@@ -199,6 +221,8 @@ export default function AchatDetailPage() {
         </dl>
       </Card>
 
+      <ContainerCosts purchaseId={p.id} />
+
       <Card title="Véhicules">
         {!p.vehicles?.length ? (
           <p className="text-slate-500">Aucun véhicule.</p>
@@ -217,8 +241,7 @@ export default function AchatDetailPage() {
               </thead>
               <tbody>
                 {p.vehicles.map((v) => {
-                  const raw = v as Record<string, unknown>;
-                  const prixFcfa = (raw.purchase_price_fcfa as number) ?? (raw.purchasePriceFcfa as number) ?? (raw.montant_fcfa as number) ?? (raw.montantFCFA as number);
+                  const prixFcfa = v.purchase_price_fcfa;
                   return (
                     <tr key={v.id} className="border-b border-slate-100">
                       <td className="p-2 font-mono">{v.vin}</td>

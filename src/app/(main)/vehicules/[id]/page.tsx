@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { VehiclePhotos } from "@/components/uploads/VehiclePhotos";
+import { FiscalDocuments } from "@/components/uploads/FiscalDocuments";
 
 interface VehicleDetail {
   id: number;
@@ -175,8 +176,8 @@ export default function VehiculeDetailPage() {
 
       <Card title="Informations d'achat">
         <dl className="grid gap-3 sm:grid-cols-2">
-          <div><dt className="text-sm text-slate-500">Date d'achat</dt><dd>{v.purchase_date ? new Date(v.purchase_date).toLocaleDateString("fr-FR") : "—"}</dd></div>
-          <div><dt className="text-sm text-slate-500">Prix d'achat</dt><dd>{prixAchat != null ? formatFcfa(prixAchat) : "—"}</dd></div>
+          <div><dt className="text-sm text-slate-500">Date d&apos;achat</dt><dd>{v.purchase_date ? new Date(v.purchase_date).toLocaleDateString("fr-FR") : "—"}</dd></div>
+          <div><dt className="text-sm text-slate-500">Prix d&apos;achat</dt><dd>{prixAchat != null ? formatFcfa(prixAchat) : "—"}</dd></div>
           <div><dt className="text-sm text-slate-500">Frais transport</dt><dd>{v.transport_fees != null ? formatFcfa(v.transport_fees) : "—"}</dd></div>
           <div><dt className="text-sm text-slate-500">Fournisseur</dt><dd>{v.supplier_name ?? "—"}</dd></div>
           <div><dt className="text-sm text-slate-500">Statut</dt><dd><Badge>{v.status ?? "—"}</Badge></dd></div>
@@ -186,6 +187,15 @@ export default function VehiculeDetailPage() {
       </Card>
 
       {id ? <VehiclePhotos vehicleId={id} /> : null}
+
+      {/* Quittance douanière et pièces d'importation rattachées au véhicule. */}
+      {id ? (
+        <FiscalDocuments
+          resource="vehicles"
+          resourceId={Number(id)}
+          kind="DOCUMENT_DOUANE"
+        />
+      ) : null}
 
       <Card title="Navigation">
         <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">

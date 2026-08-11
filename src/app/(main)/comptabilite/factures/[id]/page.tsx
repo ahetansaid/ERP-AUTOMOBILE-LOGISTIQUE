@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet } from "@/lib/api";
+import { asRecords, escapeHtml, pickNumber, pickString } from "@/lib/records";
+import { FiscalDocuments } from "@/components/uploads/FiscalDocuments";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -48,9 +50,9 @@ function openFactureDefinitivePrint(inv: InvoiceDetail, receipts: ReceiptRow[]) 
       (r) =>
         `<tr>
           <td>${r.payment_date ? new Date(r.payment_date).toLocaleDateString("fr-FR") : "—"}</td>
-          <td>${r.payment_method ?? "—"}</td>
+          <td>${escapeHtml(r.payment_method ?? "—")}</td>
           <td style="text-align:right">${formatFcfa(r.amount)}</td>
-          <td>${r.reference ?? "—"}</td>
+          <td>${escapeHtml(r.reference ?? "—")}</td>
           <td style="text-align:right">${r.remaining_amount != null && r.remaining_amount > 0 ? formatFcfa(r.remaining_amount) : (r.remaining_amount === 0 ? "0 FCFA" : "—")}</td>
         </tr>`
     )
@@ -62,7 +64,7 @@ function openFactureDefinitivePrint(inv: InvoiceDetail, receipts: ReceiptRow[]) 
       : "<p>Aucun reçu pour cette facture.</p>";
   const html = `
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Facture ${inv.invoice_number ?? inv.id}</title>
+<html><head><meta charset="utf-8"><title>Facture ${escapeHtml(inv.invoice_number ?? inv.id)}</title>
 <style>body{font-family:system-ui,sans-serif;max-width:640px;margin:2rem auto;padding:1rem;}
 h1{font-size:1.25rem;border-bottom:1px solid #ccc;} h2{font-size:1rem;margin-top:1.5rem;}
 table{width:100%;border-collapse:collapse;margin-top:0.5rem;}
@@ -70,9 +72,9 @@ th,td{padding:0.5rem;text-align:left;border-bottom:1px solid #eee;} th{backgroun
 td:nth-child(3),td:nth-child(5){text-align:right;}
 </style></head><body>
 <h1>Facture — ParcAuto Manager</h1>
-<p><strong>N° facture :</strong> ${inv.invoice_number ?? inv.id}</p>
-<p><strong>Client :</strong> ${inv.client_name ?? "—"}</p>
-<p><strong>VIN :</strong> ${inv.vin ?? "—"}</p>
+<p><strong>N° facture :</strong> ${escapeHtml(inv.invoice_number ?? inv.id)}</p>
+<p><strong>Client :</strong> ${escapeHtml(inv.client_name ?? "—")}</p>
+<p><strong>VIN :</strong> ${escapeHtml(inv.vin ?? "—")}</p>
 <p><strong>Prix de vente (véhicule) :</strong> ${formatFcfa(prixVente)}</p>
 <p><strong>Total payé :</strong> ${formatFcfa(paid)}</p>
 <p><strong>Solde restant :</strong> ${formatFcfa(Math.max(0, prixVente - paid))}</p>
@@ -104,59 +106,61 @@ export default function FactureFichePage() {
         apiGet<{ invoices?: unknown[] }>("/invoices"),
         apiGet<{ receipts?: unknown[] }>("/receipts"),
       ]);
-      const list = (invListRes as { invoices?: unknown[] })?.invoices ?? [];
-      const found = (list as Record<string, unknown>[]).find((x) => Number(x.id) === Number(id));
+      const found = asRecords(invListRes?.invoices).find(
+        (x) => pickNumber(x, "id") === Number(id)
+      );
       if (found) {
-        const r = found as Record<string, unknown>;
-        const priceSale = (r.price_sale as number) ?? (r.prix_vente as number) ?? (r.priceSale as number);
-        const amount = (r.amount as number) ?? (r.montant as number);
-        const totalAmount = (r.total_amount as number) ?? (r.totalAmount as number) ?? amount;
-        const paidFromApi = (r.paid_amount as number) ?? (r.paidAmount as number);
+        const amount = pickNumber(found, "amount", "montant");
+        const totalAmount = pickNumber(found, "total_amount", "totalAmount") ?? amount;
+        const priceSale = pickNumber(found, "price_sale", "prix_vente", "priceSale");
         setInvoice({
-          ...(found as InvoiceDetail),
+          id: pickNumber(found, "id") ?? Number(id),
+          vehicle_id: pickNumber(found, "vehicle_id", "vehicleId"),
+          client_id: pickNumber(found, "client_id", "clientId"),
           price_sale: priceSale ?? totalAmount ?? amount,
-          amount: amount,
-          total_amount: totalAmount ?? amount,
-          paid_amount: paidFromApi ?? undefined,
+          amount,
+          total_amount: totalAmount,
+          due_date: pickString(found, "due_date", "dueDate"),
+          status: pickString(found, "status"),
+          invoice_number: pickString(found, "invoice_number", "invoiceNumber"),
+          client_name: pickString(found, "client_name", "clientName"),
+          vin: pickString(found, "vin"),
+          paid_amount: pickNumber(found, "paid_amount", "paidAmount"),
+          remaining_amount: pickNumber(found, "remaining_amount", "remainingAmount"),
         });
       } else {
         setInvoice(null);
       }
 
-      const raw = (receiptsRes as { receipts?: unknown[] })?.receipts ?? [];
-      const all = (raw as Record<string, unknown>[]) as ReceiptRow[];
-      const forInv = all.filter((r) => {
-        const iid = r.invoice_id ?? (r as Record<string, unknown>).invoiceId;
-        return iid != null && Number(iid) === Number(id);
-      });
+      const forInv = asRecords(receiptsRes?.receipts).filter(
+        (r) => pickNumber(r, "invoice_id", "invoiceId") === Number(id)
+      );
+      // Tri chronologique : le solde restant est cumulatif, l'ordre est significatif.
       const sorted = [...forInv].sort((a, b) => {
-        const da = (a.payment_date as string) ?? (a as Record<string, unknown>).paymentDate as string ?? "";
-        const db = (b.payment_date as string) ?? (b as Record<string, unknown>).paymentDate as string ?? "";
+        const da = pickString(a, "payment_date", "paymentDate") ?? "";
+        const db = pickString(b, "payment_date", "paymentDate") ?? "";
         if (da !== db) return da.localeCompare(db);
-        return ((a.id as number) ?? 0) - ((b.id as number) ?? 0);
+        return (pickNumber(a, "id") ?? 0) - (pickNumber(b, "id") ?? 0);
       });
-      const invForPrice = found as Record<string, unknown> | undefined;
-      const prixVenteForRemaining =
-        (invForPrice?.price_sale as number) ??
-        (invForPrice?.prix_vente as number) ??
-        (invForPrice?.total_amount as number) ??
-        (invForPrice?.amount as number) ??
-        0;
+      const prixVenteForRemaining = found
+        ? pickNumber(found, "price_sale", "prix_vente", "total_amount", "amount") ?? 0
+        : 0;
       let paidSoFar = 0;
-      setReceipts(sorted.map((x) => {
-        const amt = (x.amount as number) ?? (x as Record<string, unknown>).montant as number ?? 0;
-        paidSoFar += amt;
-        const remaining = Math.max(0, prixVenteForRemaining - paidSoFar);
-        return {
-          id: (x.id as number) ?? 0,
-          invoice_id: (x.invoice_id as number) ?? (x as Record<string, unknown>).invoiceId as number,
-          amount: amt,
-          payment_date: (x.payment_date as string) ?? (x as Record<string, unknown>).paymentDate as string,
-          payment_method: (x.payment_method as string) ?? (x as Record<string, unknown>).paymentMethod as string,
-          reference: (x.reference as string) ?? (x as Record<string, unknown>).reference as string,
-          remaining_amount: remaining,
-        };
-      }));
+      setReceipts(
+        sorted.map((x) => {
+          const amt = pickNumber(x, "amount", "montant") ?? 0;
+          paidSoFar += amt;
+          return {
+            id: pickNumber(x, "id") ?? 0,
+            invoice_id: pickNumber(x, "invoice_id", "invoiceId"),
+            amount: amt,
+            payment_date: pickString(x, "payment_date", "paymentDate"),
+            payment_method: pickString(x, "payment_method", "paymentMethod"),
+            reference: pickString(x, "reference"),
+            remaining_amount: Math.max(0, prixVenteForRemaining - paidSoFar),
+          };
+        })
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur chargement");
       setInvoice(null);
@@ -311,6 +315,10 @@ export default function FactureFichePage() {
           </div>
         )}
       </Card>
+
+      {/* La plateforme n'émet pas de pièce certifiée : la facture normalisée
+          établie ailleurs se rattache ici. */}
+      <FiscalDocuments resource="invoices" resourceId={inv.id} />
     </div>
   );
 }
