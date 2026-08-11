@@ -1,8 +1,12 @@
 # Contrat de projet — Plateforme de gestion pour importateurs automobiles
 
-> Document d'engagement, version 1 — 8 août 2026.
+> Document d'engagement, version 2 — 10 août 2026.
 > Sans portée juridique ni commerciale : il sert de référence commune pour tenir le cap.
 > Version consultable : https://claude.ai/code/artifact/15b60d77-7dcd-4c26-b12f-24217dd9457d
+
+> **État au 10/08/2026** — les neuf phases sont développées et vérifiées, sur la
+> branche `feat/socle-saas` des deux dépôts. Rien n'est appliqué en base : neuf
+> migrations attendent. Voir la section 06.
 
 ---
 
@@ -110,8 +114,29 @@ chaque entreprise adapte. Trois mécanismes rendent les deux compatibles.
 | Coûts | Frais conteneur + répartition auditable · taux datés et figés · multi-devises, parité EUR protégée |
 | Stock | Coût de revient décomposé · âge · capital immobilisé · prix plancher |
 | Vente | Proforma → facture certifiée → encaissements échelonnés · solde calculé |
-| Fiscalité | Connecteur enfichable par pays — MECeF (Bénin) en premier |
+| Fiscalité | **Hors périmètre** — voir ci-dessous |
 | Terrain | Mobile hors-ligne · WhatsApp · extraction documentaire · export tableur partout |
+
+### Décision du 10/08/2026 — la certification fiscale sort du périmètre
+
+La plateforme **ne produit pas de pièce fiscale certifiée**. Elle édite des
+factures et des reçus propres à l'entreprise, et **conserve** la pièce normalisée
+établie ailleurs, rattachée au document, au véhicule ou au conteneur concerné.
+
+Ce que cela change :
+
+- le connecteur MECeF et les adaptateurs fiscaux par pays sont **supprimés** —
+  ils constituaient le seul blocage réglementaire du projet ;
+- trois types de pièce sont ajoutés (`FACTURE_NORMALISEE`, `RECU_NORMALISE`,
+  `DOCUMENT_DOUANE`), distincts des PDF que la plateforme produit ;
+- le numéro de la pièce externe est **exigé** : sans lui, le rapprochement est
+  impossible une fois le fichier archivé ;
+- un contrôle signale ce qui a été vendu ou encaissé **sans pièce jointe**.
+
+**Contrepartie assumée** : le document produit par la plateforme est un document
+commercial, pas la pièce légale. Le rapprochement entre les deux repose sur la
+rigueur de l'utilisateur — d'où le contrôle de présence, et la règle d'alerte
+`PIECE_FISCALE_MANQUANTE`.
 
 ---
 
@@ -138,18 +163,49 @@ achats, reçus et connexions ne laissent aucune trace.
 Chaque phase se termine par une **démonstration sur données réelles**, jamais sur un jeu
 de test. Une phase non recettée n'ouvre pas la suivante.
 
-| # | Phase | Durée |
+| # | Phase | État |
 |---|---|---|
-| 00 | Fondations de sécurité — isolation, audit 100 %, index, séparation des rôles | 1,5 sem. |
-| 01 | Noyau d'écritures à double axe (additif) | 3 sem. |
-| 02 | Tiers unifiés et accès externes | 1,5 sem. |
-| 03 | Recherche universelle et dossier 360° | 2,5 sem. |
-| 04 | Couche de configuration | 3 sem. |
-| 05 | Rapports périodiques et espace d'approbation | 3 sem. |
-| 06 | Moteur d'alertes | 2 sem. |
-| 07 | Modèles métier et installation guidée | 2 sem. |
-| 08 | Connecteurs fiscaux, répartition, multi-devises | 3 sem. |
-| | **Total socle** | **21,5 sem. (≈ 5 mois)** |
+| 00 | Fondations de sécurité — isolation, audit 100 %, index, séparation des rôles | **livré** |
+| 01 | Noyau d'écritures à double axe (additif) + réconciliation | **livré** |
+| 02 | Tiers unifiés et accès externes | **livré** |
+| 03 | Recherche universelle et dossier 360° | **livré** |
+| 04 | Couche de configuration | **livré** — natures, catégories, comptes, règles |
+| 05 | Rapports périodiques et espace d'approbation | **livré** |
+| 06 | Moteur d'alertes | **livré** |
+| 07 | Modèles métier et installation guidée | **livré** |
+| 08 | Répartition des frais et taux datés | **livré** |
+
+Hors plan initial, livré en complément : pièces justificatives, trois modèles
+PDF manquants, numérotation des reçus.
+
+### Ce qui reste à faire côté exploitation
+
+1. **Appliquer les neuf migrations**, dans l'ordre et **séparément** — plusieurs
+   ajoutent des valeurs d'énumération, que PostgreSQL interdit d'utiliser dans
+   la transaction qui les crée.
+2. **Initialiser**, dans cet ordre :
+   `POST /installation/modele {"code":"IMPORT_AUTO"}`, puis `POST /search/rebuild`,
+   puis `POST /alertes/evaluer`.
+3. **Tenir la double écriture** jusqu'à concordance (voir ci-dessous).
+
+### La coupure de l'ancienne trésorerie
+
+Chaque flux alimente aujourd'hui l'ancienne table **et** le grand livre. L'écran
+`/comptabilite/reconciliation` rend un verdict.
+
+Quand il est concordant **une vingtaine de jours d'affilée** : retirer les cinq
+appels `createTreasuryTransaction` dans `src/services/treasuryTransactions.js`,
+puis supprimer `src/services/ledgerBridge.js`. Un seul fichier à modifier —
+c'était le but du montage.
+
+### Ce qui n'est pas fait
+
+- **Habillage du tableau de bord** : la grammaire visuelle validée en maquette
+  n'est pas portée sur l'application. Volontairement différé pendant les phases,
+  puisque les écrans étaient en cours de refonte fonctionnelle.
+- **Phase terrain** : mobile hors-ligne, WhatsApp, extraction documentaire.
+- **Tests automatisés** : aucun. C'est le principal risque résiduel sur un
+  système qui calcule des marges.
 
 Phase terrain optionnelle (mobile hors-ligne, WhatsApp, extraction documentaire) : +4 sem.,
 à engager après recette du socle.
@@ -188,10 +244,23 @@ Si l'un apparaît, on s'arrête et on réexamine avant d'ajouter la moindre lign
 
 ## 09 — Décisions en attente
 
-| Question | Recommandation | Requis avant |
-|---|---|---|
-| Un client peut-il créer de nouveaux types d'objets ? | **Non au départ** — objets fixes, champs et étapes libres | Phase 04 |
-| Une entreprise = une société ou un groupe ? | À trancher | Phase 02 |
-| Les taux 580 / 600 / 500 : erreurs ou taux négociés ? | À trancher — conditionne le modèle de taux | Phase 08 |
-| Une facture peut-elle porter plusieurs véhicules ? | À trancher — le modèle actuel l'interdit | Phase 01 |
-| EURO / USA : deux parcs physiques ou une origine ? | À trancher — conditionne le modèle d'atelier | Phase 04 |
+| Question | État |
+|---|---|
+| Certification fiscale sur la plateforme ? | **Tranché** — non, la pièce est uploadée (section 04) |
+| Un client peut-il créer de nouveaux types d'objets ? | **Tranché** — non : objets fixes, champs et étapes libres |
+| Une facture peut-elle porter plusieurs véhicules ? | **Tranché de fait** — non, `Invoice.vehicleId` reste unique |
+| **Les taux 580 / 600 / 500 : erreurs ou taux négociés ?** | **Ouvert** — bloque la reprise de l'historique |
+| **EURO / USA : une personne sur deux parcs, ou deux homonymes ?** | **Ouvert** — les fusions sont proposées, non appliquées |
+| Une entreprise = une société ou un groupe ? | **Ouvert** — sans impact tant qu'un seul client est en service |
+
+Les deux questions en gras ont un effet concret et attendent un arbitrage.
+
+**Les taux.** Six conteneurs sur quinze mélangent 580, 600 et parfois 500. Si ce
+sont des erreurs de copier-coller, la reprise doit les normaliser ; si ce sont
+des taux réellement négociés par opération, il faut les conserver tels quels. La
+plateforme sait faire les deux — elle ne peut pas deviner lequel est vrai.
+
+**EURO / USA.** « Jean · Peintre EURO » et « Jean · Peintre USA » sont suivis
+séparément, avec des volumes distincts. Le rapprochement des noms a été rendu
+volontairement conservateur : deux tiers qu'on peut fusionner d'un clic valent
+mieux qu'un seul qu'on ne peut plus séparer.
