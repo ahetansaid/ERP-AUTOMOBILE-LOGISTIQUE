@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiGet, apiDelete } from "@/lib/api";
 import { asRecords, pickNumber, pickString } from "@/lib/records";
 import { FileUploader, type UploadKind } from "./FileUploader";
+import { openProtectedFile } from "@/lib/download";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -99,11 +100,6 @@ export function FiscalDocuments({
     }
   };
 
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("parcauto_access_token")
-      : null;
 
   return (
     <Card title={label}>
@@ -142,14 +138,17 @@ export function FiscalDocuments({
                     .join(" · ")}
                 </span>
               </span>
-              <a
-                href={`${base}/uploads/${p.id}/raw${token ? `?token=${encodeURIComponent(token)}` : ""}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() =>
+                  openProtectedFile("uploads", p.id, `/uploads/${p.id}/raw`).catch((err) =>
+                    setError(err instanceof Error ? err.message : "Ouverture impossible")
+                  )
+                }
                 className="text-sm font-semibold text-brand-600 hover:underline"
               >
                 Ouvrir
-              </a>
+              </button>
               <button
                 type="button"
                 onClick={() => handleDelete(p.id)}

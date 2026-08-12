@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiGet, apiDelete } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { FileUploader } from "./FileUploader";
+import { buildDownloadUrl } from "@/lib/download";
 
 type Upload = {
   id: number;
@@ -18,11 +19,6 @@ type Upload = {
 export function VehiclePhotos({ vehicleId }: { vehicleId: number | string }) {
   const [items, setItems] = useState<Upload[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const base =
-    (typeof window !== "undefined"
-      ? process.env.NEXT_PUBLIC_API_URL
-      : undefined) ?? "http://localhost:3001";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,13 +48,29 @@ export function VehiclePhotos({ vehicleId }: { vehicleId: number | string }) {
     }
   };
 
-  const rawUrl = (id: number) => {
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("parcauto_access_token")
-        : null;
-    return `${base}/uploads/${id}/raw${token ? `?token=${encodeURIComponent(token)}` : ""}`;
-  };
+  // Un <img src> ne peut pas porter d'en-tête : on demande au serveur un jeton
+  // limité à ce fichier et valable deux minutes, puis on renseigne la source.
+  const [urls, setUrls] = useState<Record<number, string>>({});
+  useEffect(() => {
+    let annule = false;
+    (async () => {
+      const paires = await Promise.all(
+        items.map(async (it) => {
+          try {
+            return [it.id, await buildDownloadUrl("uploads", it.id, `/uploads/${it.id}/raw`)] as const;
+          } catch {
+            return [it.id, ""] as const;
+          }
+        })
+      );
+      if (!annule) setUrls(Object.fromEntries(paires.filter(([, u]) => u)));
+    })();
+    return () => {
+      annule = true;
+    };
+  }, [items]);
+
+  const rawUrl = (id: number) => urls[id] ?? "";
 
   return (
     <Card

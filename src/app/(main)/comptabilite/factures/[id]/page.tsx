@@ -6,6 +6,7 @@ import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { asRecords, escapeHtml, pickNumber, pickString } from "@/lib/records";
 import { FiscalDocuments } from "@/components/uploads/FiscalDocuments";
+import { openProtectedFile } from "@/lib/download";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -217,16 +218,12 @@ export default function FactureFichePage() {
           <Button
             variant="primary"
             onClick={() => {
-              const base =
-                process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-              const token =
-                typeof window !== "undefined"
-                  ? localStorage.getItem("parcauto_access_token")
-                  : null;
-              // Ouvre le PDF inline dans un nouvel onglet.
-              // Le token est passé en query string car <a target=_blank> ne peut pas porter d'en-têtes.
-              const url = `${base}/invoices/${inv.id}/pdf${token ? `?token=${encodeURIComponent(token)}` : ""}`;
-              window.open(url, "_blank", "noopener,noreferrer");
+              // Jeton dédié, limité à cette facture et valable deux minutes —
+              // et non le jeton de session, qui ouvrirait toute l'API depuis
+              // l'historique du navigateur.
+              openProtectedFile("invoices", inv.id, `/invoices/${inv.id}/pdf`).catch(
+                (err) => setError(err instanceof Error ? err.message : "Ouverture impossible")
+              );
             }}
           >
             Télécharger PDF moderne

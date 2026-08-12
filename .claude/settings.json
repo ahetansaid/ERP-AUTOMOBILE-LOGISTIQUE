@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/xampp/htdocs/ERP-AUTOMOBILE-LOGISTIQUE-BACKEND/**)"
+      "Read(//c/xampp/htdocs/ERP-AUTOMOBILE-LOGISTIQUE-BACKEND/**)",
+      "WebFetch(domain:www.pexels.com)",
+      "Bash(ls -la \"/d/Documents/Park auto\" 2>&1 | head -60)",
+      "Read(//d/Documents/Park auto/**)",
+      "Bash(npx prisma *)"
     ],
     "additionalDirectories": [
       "C:\\xampp\\htdocs\\ERP-AUTOMOBILE-LOGISTIQUE-BACKEND\\prisma",
