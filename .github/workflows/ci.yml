@@ -1,0 +1,42 @@
+# Intégration continue — frontend
+#
+# Le build de production exécute désormais le typage et le lint : ils étaient
+# désactivés dans next.config.mjs, ce qui masquait 25 erreurs. Les relancer
+# explicitement donne un diagnostic lisible en cas d'échec, plutôt qu'une
+# erreur noyée dans la sortie du build.
+
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Typage
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build de production
+        run: npm run build
+        env:
+          # L'URL n'est pas appelée au build : les pages qui consomment l'API
+          # sont rendues côté client.
+          NEXT_PUBLIC_API_URL: http://localhost:3001
