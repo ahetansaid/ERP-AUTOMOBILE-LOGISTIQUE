@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet } from "@/lib/api";
+import { NAVIGATION } from "./navigation";
 
 type Command = {
   label: string;
@@ -29,53 +30,41 @@ type SearchHit = {
 /** Types disposant d'un dossier 360°. Les autres pointent vers leur liste. */
 const DOSSIER_TYPES = ["Vehicle", "Purchase", "Invoice", "Partner"];
 
-// Catalogue des commandes/actions rapides.
-// Organisé comme la sidebar + quelques « actions » (création rapide).
+/**
+ * Mots-clés de recherche, par destination.
+ *
+ * La LISTE des écrans, elle, vient de navigation.tsx — la même que la barre
+ * latérale. Elle était dupliquée ici, et les deux copies avaient déjà divergé :
+ * la palette proposait « Accueil » vers « / », qui n'est qu'une redirection, et
+ * ni l'une ni l'autre ne menait au tableau de bord.
+ */
+const MOTS_CLES: Record<string, string[]> = {
+  "/dashboard": ["accueil", "tableau", "bord", "kpi", "synthese"],
+  "/alertes": ["anomalie", "regle", "seuil", "dormant", "echue", "incoherent"],
+  "/comptabilite/rapports": ["periodique", "mensuel", "hebdomadaire", "approbation"],
+  "/supply-chain/achats": ["conteneur", "achat", "fournisseur", "import"],
+  "/supply-chain/vue-globale": ["stock", "parc", "vehicules"],
+  "/supply-chain/atelier": ["reparation", "peinture", "soudure", "maintenance"],
+  "/transit": ["douane", "connaissement", "port", "dedouanement"],
+  "/transit/suivi": ["etape", "avancement", "navire"],
+  "/comptabilite/tresorerie": ["caisse", "banque", "solde", "mobile money"],
+  "/comptabilite/reconciliation": ["ecart", "concordance", "coupure", "double ecriture"],
+  "/comptabilite/charges": ["depense", "frais", "general"],
+  "/tiers": ["prestataire", "fournisseur", "transitaire", "partenaire", "soudeur", "peintre"],
+  "/crm": ["client", "acheteur", "prospect"],
+  "/installation": ["modele", "preset", "metier", "demarrage", "configuration"],
+  "/utilisateurs": ["compte", "role", "acces", "permission"],
+};
+
 const COMMANDS: Command[] = [
-  { label: "Accueil", group: "Navigation", href: "/", keywords: ["dashboard", "tableau", "bord"] },
-  { label: "Gestion des achats", group: "Supply Chain", href: "/supply-chain/achats" },
-  { label: "Vue globale stock", group: "Supply Chain", href: "/supply-chain/vue-globale" },
-  { label: "Stock disponible", group: "Supply Chain", href: "/supply-chain/stock-disponible" },
-  { label: "Stock régulier", group: "Supply Chain", href: "/supply-chain/stock-regulier" },
-  { label: "Stock non régulier", group: "Supply Chain", href: "/supply-chain/stock-non-regulier" },
-  { label: "Atelier", group: "Supply Chain", href: "/supply-chain/atelier" },
-  { label: "Charges", group: "Comptabilité", href: "/comptabilite/charges" },
-  { label: "Devis", group: "Comptabilité", href: "/comptabilite/devis" },
-  { label: "Factures", group: "Comptabilité", href: "/comptabilite/factures" },
-  { label: "Reçus", group: "Comptabilité", href: "/comptabilite/recus" },
-  { label: "Trésorerie", group: "Comptabilité", href: "/comptabilite/tresorerie" },
-  { label: "Pro forma", group: "Comptabilité", href: "/comptabilite/proforma" },
-  { label: "Rapports", group: "Comptabilité", href: "/comptabilite/rapports" },
-  {
-    label: "Réconciliation",
-    group: "Comptabilité",
-    href: "/comptabilite/reconciliation",
-    keywords: ["grand", "livre", "ledger", "bascule", "ecart", "double", "ecriture"],
-  },
-  { label: "Transit", group: "Transit", href: "/transit" },
-  { label: "Suivi transit", group: "Transit", href: "/transit/suivi" },
-  { label: "CRM Clients", group: "CRM", href: "/crm" },
-  {
-    label: "Tiers",
-    group: "CRM",
-    href: "/tiers",
-    keywords: ["prestataire", "fournisseur", "transitaire", "partenaire", "soudeur", "peintre"],
-  },
-  { label: "Utilisateurs", group: "Admin", href: "/utilisateurs" },
-  {
-    label: "Installation",
-    group: "Admin",
-    href: "/installation",
-    keywords: ["modele", "preset", "metier", "demarrage", "configuration"],
-  },
-  { label: "Paramètres", group: "Admin", href: "/parametres" },
-  {
-    label: "Alertes",
-    group: "Admin",
-    href: "/alertes",
-    keywords: ["anomalie", "regle", "seuil", "dormant", "echue", "incoherent"],
-  },
-  { label: "Notifications", group: "Admin", href: "/notifications" },
+  ...NAVIGATION.flatMap((groupe) =>
+    groupe.entries.map((entree) => ({
+      label: entree.label,
+      group: groupe.label,
+      href: entree.href,
+      keywords: MOTS_CLES[entree.href],
+    }))
+  ),
   {
     label: "Aperçu des documents (templates)",
     group: "Design",
