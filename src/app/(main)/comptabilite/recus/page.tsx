@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
+import { escapeHtml } from "@/lib/records";
 import type { ReceiptListItem, ReceiptSourceType } from "@/types/compta";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -105,20 +106,20 @@ function openReceiptPrint(r: ReceiptListItem) {
       : "";
   const html = `
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Reçu #${r.id}</title>
+<html><head><meta charset="utf-8"><title>Reçu #${escapeHtml(r.id)}</title>
 <style>body{font-family:system-ui,sans-serif;max-width:480px;margin:2rem auto;padding:1rem;}
 h1{font-size:1.25rem;border-bottom:1px solid #ccc;padding-bottom:0.5rem;}
 p{margin:0.35rem 0;}
 strong{display:inline-block;min-width:10rem;}
 </style></head><body>
-<h1>${titre} — ParcAuto Manager</h1>
-<p><strong>N° reçu :</strong> ${r.id}</p>
-<p><strong>Origine :</strong> ${origine}</p>
-<p><strong>Client / Prestataire :</strong> ${clientPrestataire}</p>
+<h1>${escapeHtml(titre)} — ParcAuto Manager</h1>
+<p><strong>N° reçu :</strong> ${escapeHtml(r.id)}</p>
+<p><strong>Origine :</strong> ${escapeHtml(origine)}</p>
+<p><strong>Client / Prestataire :</strong> ${escapeHtml(clientPrestataire)}</p>
 <p><strong>Montant :</strong> ${r.amount != null ? r.amount.toLocaleString("fr-FR") : "—"} FCFA</p>
-<p><strong>Méthode :</strong> ${r.payment_method ?? "—"}</p>
+<p><strong>Méthode :</strong> ${escapeHtml(r.payment_method ?? "—")}</p>
 <p><strong>Date :</strong> ${dateStr}</p>
-<p><strong>Référence :</strong> ${r.reference ?? "—"}</p>
+<p><strong>Référence :</strong> ${escapeHtml(r.reference ?? "—")}</p>
 ${soldeRestantLine}
 <p style="margin-top:2rem;font-size:0.875rem;color:#666;">Document généré le ${new Date().toLocaleString("fr-FR")}</p>
 </body></html>`;

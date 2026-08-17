@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
+import { escapeHtml } from "@/lib/records";
 import type { InvoiceListItem } from "@/types/compta";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -81,9 +82,9 @@ function openInvoicePrint(i: InvoiceListItem, receipts?: ReceiptPrintRow[]) {
             (r) =>
               `<tr>
                 <td>${r.payment_date ? new Date(r.payment_date).toLocaleDateString("fr-FR") : "—"}</td>
-                <td>${r.payment_method ?? "—"}</td>
+                <td>${escapeHtml(r.payment_method ?? "—")}</td>
                 <td style="text-align:right">${formatFcfaPrint(r.amount)}</td>
-                <td>${r.reference ?? "—"}</td>
+                <td>${escapeHtml(r.reference ?? "—")}</td>
                 <td style="text-align:right">${r.remaining_amount != null && r.remaining_amount > 0 ? formatFcfaPrint(r.remaining_amount) : r.remaining_amount === 0 ? "0 FCFA" : "—"}</td>
               </tr>`
           )
@@ -98,21 +99,21 @@ function openInvoicePrint(i: InvoiceListItem, receipts?: ReceiptPrintRow[]) {
       : "<p>Aucun reçu pour cette facture.</p>";
   const html = `
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Facture ${i.invoice_number ?? i.id}</title>
+<html><head><meta charset="utf-8"><title>Facture ${escapeHtml(i.invoice_number ?? i.id)}</title>
 <style>body{font-family:system-ui,sans-serif;max-width:640px;margin:2rem auto;padding:1rem;}
 h1{font-size:1.25rem;border-bottom:1px solid #ccc;} h2{font-size:1rem;margin-top:1.5rem;}
 p{margin:0.35rem 0;} strong{display:inline-block;min-width:10rem;}
 table{width:100%;border-collapse:collapse;} th,td{padding:0.5rem;text-align:left;border-bottom:1px solid #eee;} td:nth-child(3),td:nth-child(5){text-align:right;}
 </style></head><body>
 <h1>Facture — ParcAuto Manager</h1>
-<p><strong>N° facture :</strong> ${i.invoice_number ?? i.id}</p>
-<p><strong>Client :</strong> ${i.client_name ?? "—"}</p>
-<p><strong>VIN :</strong> ${i.vin ?? "—"}</p>
+<p><strong>N° facture :</strong> ${escapeHtml(i.invoice_number ?? i.id)}</p>
+<p><strong>Client :</strong> ${escapeHtml(i.client_name ?? "—")}</p>
+<p><strong>VIN :</strong> ${escapeHtml(i.vin ?? "—")}</p>
 <p><strong>Prix de vente (véhicule) :</strong> ${formatFcfaPrint(prixVente)}</p>
 <p><strong>Montant payé :</strong> ${formatFcfaPrint(paid)}</p>
 <p><strong>Solde restant :</strong> ${formatFcfaPrint(i.remaining_amount ?? Math.max(0, prixVente - paid))}</p>
 <p><strong>Échéance :</strong> ${dueStr}</p>
-<p><strong>Statut :</strong> ${i.status ?? "—"}</p>
+<p><strong>Statut :</strong> ${escapeHtml(i.status ?? "—")}</p>
 ${tableSection}
 <p style="margin-top:2rem;font-size:0.875rem;color:#666;">Document généré le ${new Date().toLocaleString("fr-FR")}</p>
 </body></html>`;

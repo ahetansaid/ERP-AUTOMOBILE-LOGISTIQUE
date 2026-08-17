@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
+import { escapeHtml } from "@/lib/records";
 import type { DevisListItem } from "@/types/compta";
 import type { VehicleListItem } from "@/types/vehicle";
 import { Button } from "@/components/ui/Button";
@@ -44,19 +45,19 @@ function openDevisPrint(d: DevisListItem) {
   const dateStr = d.valid_until ? new Date(d.valid_until).toLocaleDateString("fr-FR") : "—";
   const html = `
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Devis #${d.id}</title>
+<html><head><meta charset="utf-8"><title>Devis #${escapeHtml(d.id)}</title>
 <style>body{font-family:system-ui,sans-serif;max-width:520px;margin:2rem auto;padding:1rem;}
 h1{font-size:1.25rem;border-bottom:1px solid #ccc;padding-bottom:0.5rem;}
 p{margin:0.35rem 0;} strong{display:inline-block;min-width:10rem;}
 </style></head><body>
 <h1>Devis maintenance — ParcAuto Manager</h1>
-<p><strong>N° devis :</strong> ${d.id}</p>
-<p><strong>Véhicule :</strong> ${d.vin ?? "—"} ${d.brand ?? ""} ${d.model ?? ""}</p>
-<p><strong>Prestataire :</strong> ${d.prestataire ?? "—"}</p>
-<p><strong>Montant :</strong> ${d.amount != null ? d.amount.toLocaleString("fr-FR") : "—"} ${d.currency ?? "FCFA"}</p>
+<p><strong>N° devis :</strong> ${escapeHtml(d.id)}</p>
+<p><strong>Véhicule :</strong> ${escapeHtml(d.vin ?? "—")} ${escapeHtml(d.brand ?? "")} ${escapeHtml(d.model ?? "")}</p>
+<p><strong>Prestataire :</strong> ${escapeHtml(d.prestataire ?? "—")}</p>
+<p><strong>Montant :</strong> ${d.amount != null ? d.amount.toLocaleString("fr-FR") : "—"} ${escapeHtml(d.currency ?? "FCFA")}</p>
 <p><strong>Valide jusqu'au :</strong> ${dateStr}</p>
-<p><strong>Statut :</strong> ${d.status ?? "—"}</p>
-<p><strong>Description :</strong> ${d.description ?? "—"}</p>
+<p><strong>Statut :</strong> ${escapeHtml(d.status ?? "—")}</p>
+<p><strong>Description :</strong> ${escapeHtml(d.description ?? "—")}</p>
 <p style="margin-top:2rem;font-size:0.875rem;color:#666;">Document généré le ${new Date().toLocaleString("fr-FR")}</p>
 </body></html>`;
   const w = window.open("", "_blank");
