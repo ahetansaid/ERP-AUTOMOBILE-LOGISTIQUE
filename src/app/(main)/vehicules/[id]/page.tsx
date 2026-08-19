@@ -3,15 +3,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiGet, apiPatch, apiDelete } from "@/lib/api";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { VehiclePhotos } from "@/components/uploads/VehiclePhotos";
 import { FiscalDocuments } from "@/components/uploads/FiscalDocuments";
 
 interface VehicleDetail {
   id: number;
+  /** Renseigné si le véhicule est sorti des listes. */
+  archived_at?: string | null;
+  archive_reason?: string | null;
   vin?: string;
   brand?: string;
   model?: string;
@@ -90,6 +94,9 @@ export default function VehiculeDetailPage() {
   const router = useRouter();
   const [suppression, setSuppression] = useState(false);
   const [refusSuppression, setRefusSuppression] = useState<string | null>(null);
+  const [motifArchive, setMotifArchive] = useState("");
+  const [archivage, setArchivage] = useState(false);
+  const [erreurArchive, setErreurArchive] = useState<string | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -162,6 +169,42 @@ export default function VehiculeDetailPage() {
     }
   };
 
+  const handleArchiver = async () => {
+    setErreurArchive(null);
+    setArchivage(true);
+    try {
+      const r = await apiPost<{ ecritures?: number }>(`/vehicles/${id}/archiver`, {
+        motif: motifArchive,
+      });
+      setMotifArchive("");
+      // On dit ce qui NE change pas : ses coûts restent comptés.
+      if (r?.ecritures) {
+        setErreurArchive(
+          `Archivé. Ses ${r.ecritures} écriture(s) restent au grand livre et ` +
+            "continuent de compter dans la valeur du stock."
+        );
+      }
+      await fetchDetail();
+    } catch (err) {
+      setErreurArchive(err instanceof Error ? err.message : "Archivage impossible");
+    } finally {
+      setArchivage(false);
+    }
+  };
+
+  const handleDesarchiver = async () => {
+    setErreurArchive(null);
+    setArchivage(true);
+    try {
+      await apiPost(`/vehicles/${id}/desarchiver`, {});
+      await fetchDetail();
+    } catch (err) {
+      setErreurArchive(err instanceof Error ? err.message : "Opération impossible");
+    } finally {
+      setArchivage(false);
+    }
+  };
+
   if (loading && !vehicle) {
     return <p className="py-8 text-slate-500">Chargement…</p>;
   }
@@ -178,6 +221,7 @@ export default function VehiculeDetailPage() {
   }
 
   const v = vehicle!;
+  const estArchive = Boolean(v.archived_at);
 
   const isVendu = (v.status ?? "").toUpperCase() === "VENDU";
 
@@ -254,12 +298,71 @@ export default function VehiculeDetailPage() {
         </div>
       </Card>
 
-      <Card title="Retirer du parc">
+      <Card title={estArchive ? "Véhicule archivé" : "Sortir ce véhicule du parc"}>
+        {estArchive ? (
+          <>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              Ce véhicule ne figure plus dans les listes ni dans le tableau de
+              bord. <strong>Ses écritures restent au grand livre</strong> et
+              continuent de compter dans la valeur du stock — archiver cache, ça
+              ne fait pas disparaître l&apos;argent.
+            </p>
+            {v.archive_reason && (
+              <p className="mt-3 rounded-xl bg-neutral-100 px-4 py-3 text-sm dark:bg-neutral-800/60">
+                <span className="text-neutral-500">Motif : </span>
+                {v.archive_reason}
+              </p>
+            )}
+            <div className="mt-4">
+              <Button variant="secondary" onClick={handleDesarchiver} disabled={archivage}>
+                {archivage ? "En cours…" : "Remettre dans le parc"}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              <strong>Archiver</strong> le sort des listes, du tableau de bord et
+              des alertes, sans rien changer à la comptabilité : ses écritures
+              restent et continuent de compter. C&apos;est réversible, et c&apos;est
+              ce qu&apos;il faut choisir dans presque tous les cas.
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="flex-1">
+                <Input
+                  label="Motif de l’archivage"
+                  placeholder="Pourquoi le sortir du parc ?"
+                  value={motifArchive}
+                  onChange={(e) => setMotifArchive(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={handleArchiver}
+                disabled={archivage || motifArchive.trim().length < 3}
+              >
+                {archivage ? "En cours…" : "Archiver"}
+              </Button>
+            </div>
+          </>
+        )}
+
+        {erreurArchive && (
+          <p
+            className="mt-3 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-300"
+            role="status"
+          >
+            {erreurArchive}
+          </p>
+        )}
+
+        <hr className="my-5 border-neutral-200 dark:border-neutral-800" />
+
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          À n&apos;utiliser que pour un véhicule <strong>entré par erreur</strong>.
-          Un véhicule qui porte des écritures au grand livre, une facture ou un
-          devis ne peut pas être supprimé : ses coûts resteraient comptés dans
-          les totaux sans plus rien à quoi les rattacher.
+          <strong>Supprimer</strong> est irréversible et réservé à un véhicule
+          <strong> entré par erreur</strong>. Un véhicule qui porte des écritures
+          au grand livre, une facture ou un devis ne peut pas être supprimé : ses
+          coûts resteraient comptés dans les totaux sans plus rien à quoi les
+          rattacher.
         </p>
         {refusSuppression && (
           <p

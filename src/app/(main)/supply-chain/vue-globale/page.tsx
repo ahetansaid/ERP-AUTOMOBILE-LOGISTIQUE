@@ -35,12 +35,16 @@ export default function VueGlobalePage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  // Les archivés sont hors parc par défaut. Ce bouton est le seul chemin pour
+  // les retrouver : sans lui, archiver serait un moyen de perdre des choses.
+  const [vueArchives, setVueArchives] = useState(false);
 
   const fetchList = useCallback(async () => {
     try {
       setError(null);
       const params = new URLSearchParams();
       if (filterStatus) params.set("status", filterStatus);
+      if (vueArchives) params.set("archives", "1");
       const res = await apiGet<{ data?: unknown[] }>(`/vehicles?${params.toString()}`);
       const raw = Array.isArray(res) ? res : (res as { data?: unknown[] })?.data ?? [];
       setList((raw as Record<string, unknown>[]).map(pickVehicle));
@@ -50,7 +54,7 @@ export default function VueGlobalePage() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus]);
+  }, [filterStatus, vueArchives]);
 
   useEffect(() => {
     fetchList();
@@ -83,6 +87,18 @@ export default function VueGlobalePage() {
           <option value="VENDU">Vendu</option>
           <option value="EN_MAINTENANCE">En maintenance</option>
         </select>
+        <button
+          type="button"
+          onClick={() => setVueArchives((v) => !v)}
+          aria-pressed={vueArchives}
+          className={
+            vueArchives
+              ? "rounded border border-brand-300 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300"
+              : "rounded border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+          }
+        >
+          {vueArchives ? "← Parc en activité" : "Véhicules archivés"}
+        </button>
       </div>
       <Card title="Parc">
         {loading ? <p className="py-8 text-center text-slate-500">Chargement…</p> : filtered.length === 0 ? <p className="py-8 text-center text-slate-500">Aucun véhicule.</p> : (
