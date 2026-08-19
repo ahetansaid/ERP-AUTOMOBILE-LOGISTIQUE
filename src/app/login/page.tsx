@@ -37,7 +37,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const finishLogin = (d: LoginResponse) => {
-    if (!d.user || !d.accessToken || !d.refreshToken || d.expiresIn == null) return;
+    // Les jetons du corps ne sont plus exigés : la session est portée par les
+    // cookies `httpOnly` que le serveur vient de poser. On n'attend plus que
+    // l'utilisateur et la durée indicative.
+    if (!d.user || d.expiresIn == null) return;
     loginSuccess({
       user: {
         id: d.user.id,
@@ -47,8 +50,6 @@ export default function LoginPage() {
         role: d.user.role as import("@/types").UserRole,
         companyId: d.user.companyId ?? d.user.company_id,
       },
-      accessToken: d.accessToken,
-      refreshToken: d.refreshToken,
       expiresIn: d.expiresIn,
     });
   };

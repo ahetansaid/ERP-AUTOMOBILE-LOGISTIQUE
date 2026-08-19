@@ -22,16 +22,23 @@ export function setStoredUser(user: User | null): void {
   else localStorage.removeItem(STORAGE_KEYS.USER);
 }
 
-export function setStoredTokens(
-  accessToken: string,
-  refreshToken: string,
-  expiresIn: number
-): void {
+/**
+ * Les jetons ne sont plus stockés : ils vivent dans des cookies `httpOnly` que
+ * le navigateur gère seul et qu'aucun script ne peut lire.
+ *
+ * On ne garde qu'une date d'expiration indicative, pour que l'interface sache
+ * quand la session est probablement finie sans avoir à interroger l'API. Ce
+ * n'est qu'un indice : l'autorité reste le 401.
+ */
+export function setSessionHint(expiresIn: number): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-  localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-  const expiresAt = Date.now() + expiresIn * 1000;
-  localStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRES_AT, String(expiresAt));
+  localStorage.setItem(
+    STORAGE_KEYS.TOKEN_EXPIRES_AT,
+    String(Date.now() + expiresIn * 1000)
+  );
+  // Purge des jetons de l'ancien mode, s'ils traînent d'une session antérieure.
+  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
 }
 
 export function clearAuth(): void {
@@ -42,12 +49,25 @@ export function clearAuth(): void {
   localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
 }
 
+/**
+ * Session probablement ouverte ?
+ *
+ * Ne peut plus être une certitude : le cookie est illisible par script. On se
+ * fonde sur l'utilisateur en mémoire et sur la date indicative. Une réponse
+ * fausse-positive n'est pas grave — l'API renverra 401 et l'intercepteur
+ * redirigera. L'inverse le serait : déconnecter quelqu'un qui a une session
+ * valide.
+ */
 export function isAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
-  const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  if (!localStorage.getItem(STORAGE_KEYS.USER)) return false;
   const expiresAt = localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
-  if (!token) return false;
-  if (expiresAt && Date.now() >= Number(expiresAt)) return false;
+  // Le jeton d'accès dure 30 min, celui de rafraîchissement 30 jours : passé
+  // l'expiration de l'accès, la session peut encore être renouvelée
+  // silencieusement. On ne déconnecte donc pas sur cette seule base.
+  if (expiresAt && Date.now() >= Number(expiresAt) + 30 * 24 * 3600 * 1000) {
+    return false;
+  }
   return true;
 }
 

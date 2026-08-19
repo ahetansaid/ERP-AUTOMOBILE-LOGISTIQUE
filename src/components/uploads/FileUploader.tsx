@@ -77,14 +77,13 @@ export function FileUploader({
 
         const base =
           process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("parcauto_access_token")
-            : null;
 
+        // `fetch` direct et non le client d'API : celui-ci force
+        // `Content-Type: application/json`, ce qui casserait le multipart.
+        // La session voyage par cookie — aucun jeton à poser ici.
         const res = await fetch(`${base}/uploads`, {
           method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          credentials: "include",
           body: fd,
         });
         if (!res.ok) {

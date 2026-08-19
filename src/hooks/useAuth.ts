@@ -6,12 +6,12 @@ import type { User } from "@/types";
 import {
   getStoredUser,
   setStoredUser,
-  setStoredTokens,
+  setSessionHint,
   clearAuth,
   isAuthenticated,
   startInactivityTimer,
 } from "@/lib/auth";
-import { setOnUnauthorized } from "@/lib/api";
+import { setOnUnauthorized, apiPost } from "@/lib/api";
 
 export function useAuth() {
   const router = useRouter();
@@ -19,6 +19,11 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   const logout = useCallback(() => {
+    // Les cookies sont `httpOnly` : le front ne peut PAS les effacer lui-même.
+    // Seul le serveur le peut, en reposant des cookies expirés. On n'attend pas
+    // la réponse — l'utilisateur doit sortir de l'écran immédiatement, et une
+    // session résiduelle côté serveur expirera d'elle-même.
+    void apiPost("/auth/logout", {}, { skipRefresh: true }).catch(() => {});
     clearAuth();
     setUser(null);
     setOnUnauthorized(() => {});
@@ -34,7 +39,7 @@ export function useAuth() {
   }, [logout]);
 
   const loginSuccess = useCallback(
-    (data: { user: User; accessToken: string; refreshToken: string; expiresIn: number }) => {
+    (data: { user: User; expiresIn: number }) => {
       const u = data.user;
       setStoredUser({
         id: u.id,
@@ -44,7 +49,9 @@ export function useAuth() {
         role: u.role,
         companyId: u.companyId ?? (u as User & { company_id?: number }).company_id,
       });
-      setStoredTokens(data.accessToken, data.refreshToken, data.expiresIn);
+      // Les jetons du corps ne sont plus utilisés : le serveur a déjà posé
+      // les cookies. On ne garde qu’un indice de durée pour l’interface.
+      setSessionHint(data.expiresIn);
       setUser(getStoredUser());
       router.push("/");
     },

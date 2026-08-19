@@ -1,6 +1,16 @@
 /**
  * Client API — ParcAuto Manager
- * Base URL depuis env, intercepteur 401 → refresh puis retry ou redirection login.
+ *
+ * LA SESSION VIT DANS UN COOKIE `httpOnly`, PAS DANS `localStorage`.
+ *
+ * Aucun jeton ne transite plus par ce fichier. `credentials: "include"` suffit :
+ * le navigateur joint le cookie, et aucun script ne peut le lire — c'est tout
+ * l'objet du changement. Une injection HTML qui parviendrait à s'exécuter
+ * n'aurait plus rien à voler.
+ *
+ * Conséquence à connaître : le front ne peut plus SAVOIR s'il est authentifié
+ * en lisant quelque chose. Seule l'API le sait, et elle le dit par un 401.
+ * L'utilisateur en mémoire n'est qu'un indice d'affichage.
  */
 
 const getBaseUrl = () =>
@@ -19,37 +29,25 @@ export function setOnUnauthorized(handler: () => void) {
   onUnauthorized = handler;
 }
 
-function getStoredToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("parcauto_access_token");
-}
-
-function getStoredRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("parcauto_refresh_token");
-}
-
-async function refreshAccessToken(): Promise<string | null> {
-  const refresh = getStoredRefreshToken();
-  if (!refresh) return null;
+/**
+ * Renouvelle la session.
+ *
+ * Aucun jeton en corps : le cookie de rafraîchissement part tout seul, et le
+ * serveur repose un cookie d'accès neuf. Retourne simplement si ça a marché.
+ */
+async function rafraichirSession(): Promise<boolean> {
   const base = getBaseUrl();
-  const res = await fetch(`${base}/auth/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken: refresh }),
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const newToken = data.accessToken ?? data.access_token;
-  if (newToken && typeof window !== "undefined") {
-    localStorage.setItem("parcauto_access_token", newToken);
-    const expiresIn = data.expiresIn ?? data.expires_in ?? 3600;
-    localStorage.setItem(
-      "parcauto_token_expires_at",
-      String(Date.now() + expiresIn * 1000)
-    );
+  try {
+    const res = await fetch(`${base}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: "{}",
+    });
+    return res.ok;
+  } catch {
+    return false;
   }
-  return newToken ?? null;
 }
 
 export async function api<T = unknown>(
@@ -65,18 +63,14 @@ export async function api<T = unknown>(
     ...((init.headers as Record<string, string>) ?? {}),
   };
 
-  if (!skipAuth) {
-    const token = getStoredToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  let res = await fetch(url, { ...init, headers });
+  // `include` et non `same-origin` : l'API est sur une autre origine, et c'est
+  // la seule façon d'y joindre le cookie de session.
+  let res = await fetch(url, { ...init, headers, credentials: "include" });
 
   if (res.status === 401 && !skipAuth && !skipRefresh) {
-    const newToken = await refreshAccessToken();
-    if (newToken) {
-      headers["Authorization"] = `Bearer ${newToken}`;
-      res = await fetch(url, { ...init, headers });
+    const renouvele = await rafraichirSession();
+    if (renouvele) {
+      res = await fetch(url, { ...init, headers, credentials: "include" });
     }
     if (res.status === 401 && onUnauthorized) {
       onUnauthorized();
