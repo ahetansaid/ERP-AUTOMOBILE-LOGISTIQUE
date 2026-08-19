@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiGet, apiPatch } from "@/lib/api";
+import { apiGet, apiPatch, apiDelete } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -68,6 +68,18 @@ function formatFcfa(value: number | undefined | null): string {
   return `${value.toLocaleString("fr-FR")} FCFA`;
 }
 
+/**
+ * Retrait d'un véhicule entré par erreur.
+ *
+ * L'action vit sur la FICHE et non dans une ligne de liste : on doit voir ce
+ * qu'on efface, et un clic de travers sur quarante-cinq lignes est trop facile.
+ *
+ * Le serveur refuse (409) dès que le véhicule porte des écritures, une facture
+ * ou un devis — le grand livre ne s'efface pas, et supprimer le véhicule
+ * laisserait ses coûts comptés dans les totaux sans plus rien à quoi les
+ * rattacher. Le message du serveur est affiché tel quel : il nomme ce qui
+ * bloque, ce qu'un « suppression impossible » générique ne ferait pas.
+ */
 export default function VehiculeDetailPage() {
   const params = useParams();
   const id = params?.id ? String(params.id) : null;
@@ -75,6 +87,9 @@ export default function VehiculeDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [markingExit, setMarkingExit] = useState(false);
+  const router = useRouter();
+  const [suppression, setSuppression] = useState(false);
+  const [refusSuppression, setRefusSuppression] = useState<string | null>(null);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -117,6 +132,35 @@ export default function VehiculeDetailPage() {
       </div>
     );
   }
+
+  const handleSupprimer = async () => {
+    // `vehicle` plutôt que `v` : ce dernier est déclaré plus bas dans le corps
+    // du composant, et s'appuyer sur l'ordre d'exécution d'une fermeture est un
+    // piège pour la prochaine personne qui déplacera ce bloc.
+    const nom =
+      [vehicle?.brand, vehicle?.model].filter(Boolean).join(" ") || vehicle?.vin || `#${id}`;
+    if (
+      !confirm(
+        `Retirer définitivement ${nom} du parc ?
+
+` +
+          "À n'utiliser que pour un véhicule entré par erreur. " +
+          "L'opération est tracée au journal d'audit."
+      )
+    ) {
+      return;
+    }
+    setRefusSuppression(null);
+    setSuppression(true);
+    try {
+      await apiDelete(`/vehicles/${id}`);
+      router.push("/supply-chain/vue-globale");
+    } catch (err) {
+      setRefusSuppression(err instanceof Error ? err.message : "Suppression impossible");
+    } finally {
+      setSuppression(false);
+    }
+  };
 
   if (loading && !vehicle) {
     return <p className="py-8 text-slate-500">Chargement…</p>;
@@ -207,6 +251,28 @@ export default function VehiculeDetailPage() {
           <Link href="/comptabilite/factures" className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">Facture</Link>
           <Link href="/comptabilite/recus" className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">Paiements</Link>
           <Link href={`/vehicules/${id}/historique`} className="inline-flex items-center rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-800 dark:border-primary-800 dark:bg-primary-900/30 dark:text-primary-200">Historique complet</Link>
+        </div>
+      </Card>
+
+      <Card title="Retirer du parc">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          À n&apos;utiliser que pour un véhicule <strong>entré par erreur</strong>.
+          Un véhicule qui porte des écritures au grand livre, une facture ou un
+          devis ne peut pas être supprimé : ses coûts resteraient comptés dans
+          les totaux sans plus rien à quoi les rattacher.
+        </p>
+        {refusSuppression && (
+          <p
+            className="mt-3 rounded-xl border border-warning-300 bg-warning-50 px-4 py-3 text-sm text-warning-900 dark:border-warning-800 dark:bg-warning-950/40 dark:text-warning-200"
+            role="alert"
+          >
+            {refusSuppression}
+          </p>
+        )}
+        <div className="mt-4">
+          <Button variant="outline" onClick={handleSupprimer} disabled={suppression}>
+            {suppression ? "Suppression…" : "Retirer ce véhicule du parc"}
+          </Button>
         </div>
       </Card>
     </div>
