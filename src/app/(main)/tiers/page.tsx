@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ImportExport } from "@/components/data/ImportExport";
 
 type Kind =
   | "CLIENT" | "FOURNISSEUR" | "PRESTATAIRE" | "TRANSITAIRE"
@@ -262,6 +263,12 @@ export default function TiersPage() {
           </div>
         )}
       </Card>
+      <ImportExport
+        titre="Ajouter des tiers en masse"
+        ressource="partners"
+        description="Prestataires, transitaires, fournisseurs. Un tiers dont l'identifiant existe déjà est refusé, jamais fusionné."
+      />
+
     </div>
   );
 }

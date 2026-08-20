@@ -7,6 +7,7 @@ import type { VehicleListItem } from "@/types/vehicle";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHero } from "@/components/layout/PageHero";
+import { ImportExport } from "@/components/data/ImportExport";
 
 function pickVehicle(r: Record<string, unknown>): VehicleListItem {
   const purchasePrice = (r.purchase_price as number) ?? (r.purchasePrice as number);
@@ -139,6 +140,12 @@ export default function VueGlobalePage() {
           </div>
         )}
       </Card>
+      <ImportExport
+        titre="Ajouter des véhicules en masse"
+        ressource="vehicles"
+        description="Un conteneur arrive avec quatre à huit véhicules : le fichier évite de les saisir un par un."
+      />
+
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { apiGet, apiPost } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ImportExport } from "@/components/data/ImportExport";
 
 type Period = "week" | "month" | "year" | "all";
 
@@ -480,6 +481,12 @@ export default function TresoreriePage() {
           </div>
         </Card>
       )}
+      <ImportExport
+        titre="Saisir la caisse en masse"
+        ressource="ledger"
+        description="Les dépenses et encaissements du jour, en une fois. Le sens de chaque ligne est déclaré, jamais deviné."
+      />
+
     </div>
   );
 }
