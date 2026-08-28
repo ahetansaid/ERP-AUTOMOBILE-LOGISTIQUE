@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { VehiclePhotos } from "@/components/uploads/VehiclePhotos";
 import { FiscalDocuments } from "@/components/uploads/FiscalDocuments";
+import { PorteDeSortie } from "@/components/vehicules/PorteDeSortie";
 
 interface VehicleDetail {
   id: number;
@@ -90,7 +91,6 @@ export default function VehiculeDetailPage() {
   const [vehicle, setVehicle] = useState<VehicleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [markingExit, setMarkingExit] = useState(false);
   const router = useRouter();
   const [suppression, setSuppression] = useState(false);
   const [refusSuppression, setRefusSuppression] = useState<string | null>(null);
@@ -116,18 +116,13 @@ export default function VehiculeDetailPage() {
     fetchDetail();
   }, [fetchDetail]);
 
-  const handleMarquerSortieParc = async () => {
-    if (!id) return;
-    setMarkingExit(true);
-    try {
-      await apiPatch(`/vehicles/${id}`, { status: "LIVRE" } as Record<string, string>);
-      await fetchDetail();
-    } catch {
-      setError("Impossible de marquer la sortie du parc");
-    } finally {
-      setMarkingExit(false);
-    }
-  };
+  /*
+   * Le bouton « Marquer sortie du parc » posait le statut LIVRE par un PATCH
+   * direct. Il ne regardait ni la facture, ni le solde, ni les devis ouverts,
+   * et n'en gardait aucune trace : un vehicule livre impaye devenait
+   * indistinguable d'un vehicule livre solde. La livraison passe desormais par
+   * la porte, qui enonce l'etat, exige un motif si besoin et fige le solde.
+   */
 
   if (!id) {
     return (
@@ -223,7 +218,6 @@ export default function VehiculeDetailPage() {
   const v = vehicle!;
   const estArchive = Boolean(v.archived_at);
 
-  const isVendu = (v.status ?? "").toUpperCase() === "VENDU";
 
   const prixAchat = (v.purchase_price_fcfa ?? v.purchase_price) != null ? (v.purchase_price_fcfa ?? v.purchase_price)! : null;
 
@@ -239,15 +233,6 @@ export default function VehiculeDetailPage() {
             Véhicule : {[v.brand, v.model].filter(Boolean).join(" ") || v.vin || id}
           </h1>
         </div>
-        {isVendu && (
-          <Button
-            variant="secondary"
-            onClick={handleMarquerSortieParc}
-            disabled={markingExit}
-          >
-            {markingExit ? "En cours…" : "Marquer sortie du parc"}
-          </Button>
-        )}
       </div>
 
       <Card title="Identité du véhicule">
@@ -297,6 +282,13 @@ export default function VehiculeDetailPage() {
           <Link href={`/vehicules/${id}/historique`} className="inline-flex items-center rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-800 dark:border-primary-800 dark:bg-primary-900/30 dark:text-primary-200">Historique complet</Link>
         </div>
       </Card>
+
+      {!estArchive && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <PorteDeSortie porte="atelier" vehicleId={id} onFranchie={fetchDetail} />
+          <PorteDeSortie porte="livraison" vehicleId={id} onFranchie={fetchDetail} />
+        </div>
+      )}
 
       <Card title={estArchive ? "Véhicule archivé" : "Sortir ce véhicule du parc"}>
         {estArchive ? (
