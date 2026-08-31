@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { TwoFactorPanel } from "@/components/settings/TwoFactorPanel";
+import { IdentiteSociete } from "@/components/settings/IdentiteSociete";
 
 export default function ParametresPage() {
   const [tauxUsd, setTauxUsd] = useState(600);
@@ -42,6 +43,9 @@ export default function ParametresPage() {
         <h1 className="text-2xl font-bold text-slate-900">Paramètres</h1>
         <p className="mt-1 text-slate-600">Configuration système, devises, numérotation.</p>
       </div>
+      {/* En tete : c'est ce que le client voit sur ses documents. */}
+      <IdentiteSociete />
+
       <Card title="Taux de change (FCFA)">
         <p className="mb-4 text-sm text-slate-600">Taux indicatifs pour les achats en devises.</p>
         <div className="grid gap-4 sm:grid-cols-2">
