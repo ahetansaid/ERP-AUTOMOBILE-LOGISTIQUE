@@ -61,9 +61,13 @@ interface Franchie {
 
 interface Etat {
   porte: string;
-  restant: number;
+  // null = solde NON ETABLISSABLE (vente anterieure a la plateforme), ce qui
+  // n'est pas la meme chose que zero. Les confondre afficherait « rien du »
+  // sur un dossier dont on ignore tout.
+  restant: number | null;
   pret: boolean;
   reserves: string[];
+  venteHistorique?: { vente: number; reglement: number; lignes: number } | null;
   dejaFranchie: Franchie | null;
   devis?: DevisLigne[];
   engage?: number;
@@ -171,7 +175,7 @@ export function PorteDeSortie({
   /* ── Déjà franchie : on montre ce qui a été signé, et rien d'autre ────── */
   if (etat.dejaFranchie) {
     const f = etat.dejaFranchie;
-    const soldeAlors = Number(f.soldeGele) || 0;
+    const soldeAlors = f.soldeGele == null ? null : Number(f.soldeGele);
     return (
       <Card title={t.titre}>
         <p className="text-sm text-neutral-700 dark:text-neutral-300">
@@ -188,12 +192,14 @@ export function PorteDeSortie({
           <span className="text-neutral-500">Solde restant ce jour-là : </span>
           <span
             className={`font-mono font-semibold tabular-nums ${
-              soldeAlors > 0
+              soldeAlors == null
+              ? "font-semibold text-amber-700 dark:text-amber-300"
+              : soldeAlors > 0
                 ? "text-warning-700 dark:text-warning-300"
                 : "text-accent-700 dark:text-accent-300"
             }`}
           >
-            {fcfa(soldeAlors)}
+            {soldeAlors == null ? "non établi" : fcfa(soldeAlors)}
           </span>
         </p>
         {f.motif && (
@@ -272,12 +278,14 @@ export function PorteDeSortie({
         <span className="text-neutral-500">Solde restant : </span>
         <span
           className={`font-mono text-base font-semibold tabular-nums ${
-            etat.restant > 0
+            etat.restant == null
+              ? "font-semibold text-amber-700 dark:text-amber-300"
+              : etat.restant > 0
               ? "text-warning-700 dark:text-warning-300"
               : "text-accent-700 dark:text-accent-300"
           }`}
         >
-          {fcfa(etat.restant)}
+          {etat.restant == null ? "non établi" : fcfa(etat.restant)}
         </span>
       </p>
 
@@ -323,7 +331,9 @@ export function PorteDeSortie({
         <span className="text-xs text-neutral-500">
           {besoinMotif
             ? motifValide
-              ? `Le solde de ${fcfa(etat.restant)} sera conservé avec le motif.`
+              ? etat.restant == null
+                ? "Le motif sera conservé — le solde de ce dossier n’est pas établissable."
+                : `Le solde de ${fcfa(etat.restant)} sera conservé avec le motif.`
               : "Un motif d’au moins 10 caractères est requis."
             : "Rien ne s’y oppose."}
         </span>
