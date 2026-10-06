@@ -55,6 +55,7 @@ export const NAVIGATION: NavGroup[] = [
       { href: "/supply-chain/stock-disponible", label: "Stock disponible" },
       { href: "/supply-chain/stock-regulier", label: "Stock régulier" },
       { href: "/supply-chain/stock-non-regulier", label: "Stock non régulier" },
+      { href: "/supply-chain/age-stock", label: "Âge du stock" },
       { href: "/supply-chain/atelier", label: "Atelier" },
     ],
   },
@@ -115,6 +116,8 @@ const PATHS: Record<string, string> = {
   "/supply-chain/stock-disponible": "M4 8h16v12H4zM4 8l3-4h10l3 4M9 13l2 2 4-4",
   "/supply-chain/stock-regulier": "M4 4h16v16H4zM8 12l3 3 5-6",
   "/supply-chain/stock-non-regulier": "M4 4h16v16H4zM12 8v5M12 16.4h.01",
+  // Sablier : le temps qui passe sur un capital immobilise.
+  "/supply-chain/age-stock": "M6 2h12M6 22h12M6 2c0 5 6 7 6 10s-6 5-6 10M18 2c0 5-6 7-6 10s6 5 6 10",
   "/supply-chain/atelier":
     "M14.5 5.5a3.5 3.5 0 0 0 4.6 4.6L21 12l-9 9-3-3 9-9-1.9-1.9a3.5 3.5 0 0 0-1.7-1.6zM6 15l3 3",
 
