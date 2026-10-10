@@ -94,7 +94,10 @@ export const NAVIGATION: NavGroup[] = [
     label: "Administration",
     entries: [
       { href: "/notifications", label: "Notifications" },
-      { href: "/utilisateurs", label: "Utilisateurs", roles: ["ADMIN", "PLATFORM_ADMIN"] },
+      // MANAGER voit la liste sans pouvoir l'écrire : c'est ce que le backend
+      // autorise (`users: ['read']` dans ROLE_PERMISSIONS), et savoir qui a un
+      // compte relève du management, pas de l'administration seule.
+      { href: "/utilisateurs", label: "Utilisateurs", roles: ["ADMIN", "PLATFORM_ADMIN", "MANAGER"] },
       { href: "/parametres", label: "Paramètres" },
       { href: "/installation", label: "Installation", roles: ["ADMIN", "PLATFORM_ADMIN"] },
     ],
