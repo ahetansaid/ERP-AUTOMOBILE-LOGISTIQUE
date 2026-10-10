@@ -21,6 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { APP_NAME, roleLabel } from "@/lib/constants";
+import { LogoKadie } from "@/components/brand/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { apiGet } from "@/lib/api";
 import { NAVIGATION, NavIcon, estActive, groupeActif } from "./navigation";
@@ -151,9 +152,7 @@ export function Sidebar({ onOpenCommand }: { onOpenCommand?: () => void }) {
           href="/dashboard"
           className="flex items-center gap-2.5 rounded-lg outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-brand-500/50"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-sm shadow-brand-600/20">
-            P
-          </span>
+          <LogoKadie className="h-9 w-9 rounded-[10px] object-cover ring-1 ring-neutral-900/10 dark:ring-white/15" />
           <span className="text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
             {APP_NAME}
           </span>

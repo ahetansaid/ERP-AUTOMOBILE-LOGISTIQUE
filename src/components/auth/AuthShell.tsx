@@ -6,6 +6,8 @@
  * carte en verre dépoli. Le contenu du formulaire est passé en `children`.
  */
 
+import { LogoKadie } from "@/components/brand/Logo";
+
 // Photo Pexels — vue aérienne de circulation à Lagos (contexte africain).
 export const HERO_IMAGE =
   "https://images.pexels.com/photos/16206733/pexels-photo-16206733.jpeg?auto=compress&cs=tinysrgb&w=1400";
@@ -57,9 +59,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
         <div className="relative flex h-full flex-col justify-between p-10 text-white xl:p-14">
           <div className="flex animate-fade-up items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/15 text-lg font-bold ring-1 ring-white/20 backdrop-blur-md">
-              P
-            </span>
+            <LogoKadie className="h-11 w-11 rounded-2xl object-cover ring-1 ring-white/25" />
             <span className="text-lg font-semibold tracking-tight">ParcAuto Manager</span>
           </div>
 
@@ -120,7 +120,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
               <img src={HERO_IMAGE} alt="" className="h-full w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-950/90 to-brand-700/30" />
               <div className="absolute bottom-3 left-4 flex items-center gap-2 text-white">
-                <span className="grid h-8 w-8 place-items-center rounded-xl bg-white/20 text-sm font-bold backdrop-blur">P</span>
+                <LogoKadie className="h-8 w-8 rounded-xl object-cover ring-1 ring-white/25" />
                 <span className="font-semibold tracking-tight">ParcAuto Manager</span>
               </div>
             </div>
